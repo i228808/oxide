@@ -1,0 +1,27 @@
+# Build artifacts
+/target/
+Cargo.lock
+
+# Windows debug symbols
+*.pdb
+
+# Environment / secrets
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Cursor workspace artifacts
+agent-transcripts/
+mcps/
+terminals/
+agent-tools/

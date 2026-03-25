@@ -1,0 +1,146 @@
+# Oxide
+
+A **Rust-native, opinionated web framework** that delivers a Spring Boot-like developer experience — without runtime reflection.
+
+Built on top of [Axum](https://github.com/tokio-rs/axum) and [Tokio](https://tokio.rs), Oxide provides convention-first project structure, a clean chainable API, and standardized patterns for routing, configuration, middleware, and shared state.
+
+## Quickstart
+
+```rust
+use oxide_core::{App, ApiResponse, Config, Data};
+use serde::Serialize;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+struct Counter { value: AtomicU64 }
+
+#[derive(Serialize)]
+struct Message { text: String }
+
+async fn index(Config(cfg): Config) -> ApiResponse<Message> {
+    ApiResponse::ok(Message { text: format!("Hello from {}!", cfg.app_name) })
+}
+
+fn main() {
+    App::new()
+        .config("app.yaml")
+        .state(Counter { value: AtomicU64::new(0) })
+        .rate_limit(100, 60)
+        .cors_permissive()
+        .request_timeout(30)
+        .get("/", index)
+        .run();
+}
+```
+
+That gives you:
+
+- A running HTTP server on `127.0.0.1:3000`
+- Configuration loaded from YAML + environment variables
+- Shared state accessible in handlers via extractors
+- Per-request logging (method, path, status, latency)
+- Per-IP rate limiting (429 JSON on exceeded)
+- CORS headers for cross-origin requests
+- Request timeout enforcement (408 JSON on timeout)
+- Graceful shutdown on Ctrl+C / SIGTERM
+- Standardized JSON response envelopes
+
+## Project Structure
+
+```
+Oxide/
+├── Cargo.toml                 # Workspace root
+├── app.yaml                   # Application config
+│
+├── oxide_core/                # Framework library
+│   ├── src/
+│   │   ├── lib.rs             # Public API exports
+│   │   ├── app.rs             # App builder + server lifecycle
+│   │   ├── router.rs          # OxideRouter, Method enum
+│   │   ├── response.rs        # ApiResponse, JSON envelopes
+│   │   ├── config.rs          # AppConfig, YAML + env loading
+│   │   ├── state.rs           # AppState, TypeMap (shared state)
+│   │   ├── extract.rs         # Config, Data<T> extractors
+│   │   ├── middleware.rs       # Request logger, state injection layer
+│   │   └── logging.rs         # tracing-subscriber init
+│   └── examples/
+│       └── hello.rs           # Full working example
+│
+├── oxide_macros/              # Proc-macro crate (future)
+└── oxide_cli/                 # CLI tooling (future)
+```
+
+## Public API at a Glance
+
+| Export | Description |
+|---|---|
+| `App` | Builder for creating and running an Oxide application |
+| `OxideRouter` | Standalone router for modular route groups |
+| `Method` | Enum: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`, `OPTIONS` |
+| `ApiResponse<T>` | Standardized JSON response with success/error envelopes |
+| `AppConfig` | Configuration struct (YAML + env vars) |
+| `AppState` | Shared state container (config + user extensions) |
+| `Config` | Extractor for `AppConfig` in handlers |
+| `Data<T>` | Extractor for user-provided state in handlers |
+| `Json` | Re-export of `axum::Json` for request/response bodies |
+| `Path` | Re-export of `axum::extract::Path` for path parameters |
+| `StatusCode` | Re-export of `axum::http::StatusCode` |
+
+## Documentation
+
+- [Getting Started](docs/getting-started.md) — Setup, first app, running the server
+- [Routing](docs/routing.md) — Methods, nesting, merging, path parameters
+- [Responses](docs/responses.md) — ApiResponse, JSON envelopes, error handling
+- [Configuration](docs/configuration.md) — YAML files, environment variables, defaults
+- [State Management](docs/state.md) — Shared state, Config/Data extractors, thread safety
+- [Middleware](docs/middleware.md) — Request logging, middleware architecture, custom middleware
+- [Architecture](docs/architecture.md) — Crate layout, data flow, design principles
+
+## Dependencies
+
+| Crate | Purpose |
+|---|---|
+| `axum` 0.8 | HTTP routing and handler framework |
+| `tokio` 1 | Async runtime |
+| `tower` 0.5 | Middleware layer/service abstractions |
+| `tower-http` 0.6 | CORS middleware |
+| `serde` / `serde_json` / `serde_yaml` | Serialization and config parsing |
+| `tracing` / `tracing-subscriber` | Structured logging |
+
+## Running the Example
+
+```bash
+cd oxide_core
+cargo run --example hello
+```
+
+Then:
+
+```bash
+curl http://127.0.0.1:3000/
+# {"status":200,"data":{"text":"Hello from my-oxide-app!"}}
+
+curl http://127.0.0.1:3000/stats
+# {"status":200,"data":{"app_name":"my-oxide-app","total_users_created":0}}
+
+curl http://127.0.0.1:3000/api/users
+# {"status":200,"data":[{"id":1,"name":"Alice"},{"id":2,"name":"Bob"}]}
+
+curl -X POST http://127.0.0.1:3000/api/users -H "Content-Type: application/json" -d '{"name":"Charlie"}'
+# {"status":201,"data":{"id":1,"name":"Charlie"}}
+
+curl http://127.0.0.1:3000/stats
+# {"status":200,"data":{"app_name":"my-oxide-app","total_users_created":1}}
+```
+
+Server logs:
+
+```
+INFO oxide_core::app: Oxide server started name=my-oxide-app address=127.0.0.1:3000
+INFO oxide_core::middleware: request completed method=GET path=/ status=200 latency_ms=0
+INFO oxide_core::middleware: request completed method=POST path=/api/users status=201 latency_ms=0
+INFO oxide_core::middleware: request completed method=GET path=/api/users/0 status=404 latency_ms=0
+```
+
+## License
+
+MIT

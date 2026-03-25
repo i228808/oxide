@@ -1,0 +1,9 @@
+[package]
+name = "oxide_macros"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
