@@ -1,13 +1,17 @@
+use std::net::SocketAddr;
+use std::sync::Arc;
+use std::time::Duration;
+
 use axum::handler::Handler;
 use axum::Router;
-use std::net::SocketAddr;
-use std::time::Duration;
 use tokio::net::TcpListener;
 use tower_http::catch_panic::CatchPanicLayer;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::normalize_path::NormalizePathLayer;
 use tracing::info;
 
 use crate::config::AppConfig;
+use crate::controller::Controller;
 use crate::logging;
 use crate::middleware::{self, InjectStateLayer, RequestTimeoutLayer};
 use crate::rate_limit::RateLimitLayer;
@@ -51,6 +55,7 @@ pub struct App {
     rate_limit: Option<(u64, Duration)>,
     cors: Option<CorsLayer>,
     request_timeout: Option<Duration>,
+    controller_factories: Vec<Box<dyn FnOnce(AppState) -> OxideRouter>>,
 }
 
 impl App {
@@ -69,6 +74,7 @@ impl App {
             rate_limit: None,
             cors: None,
             request_timeout: None,
+            controller_factories: Vec::new(),
         }
     }
 
@@ -148,6 +154,26 @@ impl App {
         self
     }
 
+    // -- Controller registration ----------------------------------------------
+
+    /// Register a `#[controller]`-annotated struct.
+    ///
+    /// At startup the framework will:
+    /// 1. Construct the controller via `C::from_state(&app_state)`.
+    /// 2. Call `C::register(Arc::new(instance))` to build its routes.
+    /// 3. Nest those routes under `C::PREFIX`.
+    ///
+    /// Dependencies are resolved eagerly — a missing `Data<T>` will panic at
+    /// startup, not at request time (fail-fast).
+    pub fn controller<C: Controller>(mut self) -> Self {
+        self.controller_factories.push(Box::new(|state: AppState| {
+            let instance = Arc::new(C::from_state(&state));
+            let routes = C::register(instance);
+            OxideRouter::new().nest(C::PREFIX, routes)
+        }));
+        self
+    }
+
     // -- Router composition ---------------------------------------------------
 
     /// Merge a pre-built `OxideRouter` into the application (flat, no prefix).
@@ -219,41 +245,42 @@ impl App {
 
     fn build_router(self, config: AppConfig) -> (Router, AppState) {
         let app_state = AppState::new(config, self.type_map);
-        let mut router = self.router.into_inner();
+
+        let mut base = self.router;
+        for factory in self.controller_factories {
+            let ctrl_router = factory(app_state.clone());
+            base = base.merge(ctrl_router);
+        }
+        let mut router = base.into_inner();
 
         // Layer order (innermost → outermost):
-        //   Handler ← State ← CatchPanic ← RateLimit ← Timeout ← CORS ← Logger
-        //
-        // - State injection is innermost so handlers can access AppState
-        // - CatchPanic wraps the handler so panics become 500 (not connection reset)
-        // - Rate limiting is outside CatchPanic (panicked requests still count)
-        // - Timeout wraps the processing pipeline
-        // - CORS is outer to rate limit + timeout so ALL responses get CORS headers
-        //   and OPTIONS preflight is handled before reaching the rate limiter
-        // - Logger is outermost to capture total latency including all middleware
+        //   Handler ← NormalizePath ← State ← CatchPanic ← RateLimit ← Timeout ← CORS ← Logger
 
-        // 1. State injection (innermost)
+        // 1. Trailing-slash normalisation — strips `/path/` to `/path` before matching
+        router = router.layer(NormalizePathLayer::trim_trailing_slash());
+
+        // 2. State injection
         router = router.layer(InjectStateLayer::new(app_state.clone()));
 
-        // 2. Panic recovery — handler panics become JSON 500 responses
+        // 3. Panic recovery — handler panics become JSON 500 responses
         router = router.layer(CatchPanicLayer::custom(middleware::panic_json_response));
 
-        // 3. Rate limiting
+        // 4. Rate limiting
         if let Some((max, window)) = self.rate_limit {
             router = router.layer(RateLimitLayer::new(max, window));
         }
 
-        // 4. Request timeout
+        // 5. Request timeout
         if let Some(timeout) = self.request_timeout {
             router = router.layer(RequestTimeoutLayer::new(timeout));
         }
 
-        // 5. CORS (wraps everything — headers on ALL responses including 429/408/500)
+        // 6. CORS (wraps everything — headers on ALL responses including 429/408/500)
         if let Some(cors) = self.cors {
             router = router.layer(cors);
         }
 
-        // 6. Request logging (outermost)
+        // 7. Request logging (outermost)
         if self.request_logging {
             router = router.layer(axum::middleware::from_fn(middleware::request_logger));
         }

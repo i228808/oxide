@@ -72,6 +72,44 @@ impl<S: Send + Sync, T: Send + Sync + 'static> FromRequestParts<S> for Data<T> {
     }
 }
 
+/// Ergonomic alias for [`Data<T>`] — intended for use inside controllers.
+///
+/// Semantically identical to `Data`, but reads more naturally in constructor
+/// injection code:
+///
+/// ```rust,ignore
+/// fn new(state: &AppState) -> Self {
+///     Self {
+///         pool: state.get::<DbPool>().expect("DbPool missing").as_ref().clone(),
+///     }
+/// }
+///
+/// #[get("/")]
+/// async fn index(&self, Inject(cache): Inject<Cache>) -> ApiResponse<String> {
+///     // ...
+/// }
+/// ```
+pub struct Inject<T: Send + Sync + 'static>(pub Arc<T>);
+
+impl<S: Send + Sync, T: Send + Sync + 'static> FromRequestParts<S> for Inject<T> {
+    type Rejection = StateNotFound;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        let app_state = parts
+            .extensions
+            .get::<AppState>()
+            .ok_or(StateNotFound("AppState"))?;
+
+        app_state
+            .get::<T>()
+            .map(Inject)
+            .ok_or(StateNotFound(std::any::type_name::<T>()))
+    }
+}
+
 /// Rejection returned when requested state is missing.
 #[derive(Debug)]
 pub struct StateNotFound(pub &'static str);

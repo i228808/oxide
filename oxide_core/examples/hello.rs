@@ -1,4 +1,4 @@
-use oxide_core::{ApiResponse, App, Config, Data, Json, OxideRouter, Path};
+use oxide_core::{controller, ApiResponse, App, AppState, Config, Data, Json, OxideRouter, Path};
 use serde::Serialize;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -119,7 +119,7 @@ async fn slow() -> ApiResponse<Message> {
 }
 
 // ---------------------------------------------------------------------------
-// Router modules
+// Router modules (manual style)
 // ---------------------------------------------------------------------------
 
 fn user_routes() -> OxideRouter {
@@ -131,6 +131,50 @@ fn user_routes() -> OxideRouter {
 }
 
 // ---------------------------------------------------------------------------
+// Controller-based approach (Month 2)
+// ---------------------------------------------------------------------------
+
+struct ProductController {
+    counter: std::sync::Arc<Counter>,
+}
+
+#[controller("/api/products")]
+impl ProductController {
+    fn new(state: &AppState) -> Self {
+        Self {
+            counter: state.get::<Counter>().expect("Counter not registered"),
+        }
+    }
+
+    #[get("/")]
+    async fn list(&self) -> ApiResponse<Vec<Message>> {
+        ApiResponse::ok(vec![
+            Message { text: "Widget".into() },
+            Message { text: "Gadget".into() },
+        ])
+    }
+
+    #[get("/{id}")]
+    async fn get_one(&self, Path(id): Path<u64>) -> ApiResponse<Message> {
+        ApiResponse::ok(Message {
+            text: format!("Product #{id}"),
+        })
+    }
+
+    #[post("/")]
+    async fn create(&self, Json(payload): Json<serde_json::Value>) -> ApiResponse<Message> {
+        let count = self.counter.increment();
+        let name = payload
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unnamed");
+        ApiResponse::created(Message {
+            text: format!("created {name} (total: {count})"),
+        })
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Application entry point
 // ---------------------------------------------------------------------------
 
@@ -139,14 +183,16 @@ fn main() {
         .config("../app.yaml")
         .state(Counter::new())
         // -- Scalability --
-        .rate_limit(100, 60)       // 100 requests per 60 seconds per IP
-        .cors_permissive()         // allow any origin (development)
-        .request_timeout(5)        // 5-second timeout
-        // -- Routes --
+        .rate_limit(100, 60)
+        .cors_permissive()
+        .request_timeout(5)
+        // -- Routes (manual style) --
         .get("/", index)
         .get("/health", health)
         .get("/stats", stats)
         .get("/slow", slow)
         .nest("/api/users", user_routes())
+        // -- Controller (macro style) --
+        .controller::<ProductController>()
         .run();
 }
