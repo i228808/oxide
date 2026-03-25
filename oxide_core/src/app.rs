@@ -1,13 +1,16 @@
+use std::future::Future;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
+use axum::extract::Request;
 use axum::handler::Handler;
+use axum::middleware::Next;
+use axum::response::Response;
 use axum::Router;
 use tokio::net::TcpListener;
 use tower_http::catch_panic::CatchPanicLayer;
 use tower_http::cors::{Any, CorsLayer};
-use tower_http::normalize_path::NormalizePathLayer;
 use tracing::info;
 
 use crate::config::AppConfig;
@@ -17,6 +20,8 @@ use crate::middleware::{self, InjectStateLayer, RequestTimeoutLayer};
 use crate::rate_limit::RateLimitLayer;
 use crate::router::{Method, OxideRouter};
 use crate::state::{AppState, TypeMap};
+
+type RouterTransform = Box<dyn FnOnce(Router) -> Router>;
 
 /// Primary entry point for building an Oxide application.
 ///
@@ -56,6 +61,10 @@ pub struct App {
     cors: Option<CorsLayer>,
     request_timeout: Option<Duration>,
     controller_factories: Vec<Box<dyn FnOnce(AppState) -> OxideRouter>>,
+    /// User-registered middleware (before/after hooks, custom layers).
+    /// Applied between State injection and CatchPanic (can access state,
+    /// panics are still caught).
+    user_layers: Vec<RouterTransform>,
 }
 
 impl App {
@@ -75,6 +84,7 @@ impl App {
             cors: None,
             request_timeout: None,
             controller_factories: Vec::new(),
+            user_layers: Vec::new(),
         }
     }
 
@@ -169,7 +179,8 @@ impl App {
         self.controller_factories.push(Box::new(|state: AppState| {
             let instance = Arc::new(C::from_state(&state));
             let routes = C::register(instance);
-            OxideRouter::new().nest(C::PREFIX, routes)
+            let inner = C::configure_router(routes.into_inner());
+            OxideRouter::from_router(inner).nest_self(C::PREFIX)
         }));
         self
     }
@@ -241,6 +252,70 @@ impl App {
         self
     }
 
+    // -- Lifecycle hooks & custom middleware -----------------------------------
+
+    /// Register a "before" hook that runs on every request.
+    ///
+    /// The hook receives the request and a [`Next`] handle, and must produce a
+    /// response. Use it for auth checks, request mutation, short-circuit
+    /// responses, etc.
+    ///
+    /// ```rust,ignore
+    /// app.before(|req: Request, next: Next| async move {
+    ///     println!("incoming: {} {}", req.method(), req.uri());
+    ///     next.run(req).await
+    /// })
+    /// ```
+    pub fn before<F, Fut>(mut self, f: F) -> Self
+    where
+        F: Fn(Request, Next) -> Fut + Clone + Send + Sync + 'static,
+        Fut: Future<Output = Response> + Send + 'static,
+    {
+        self.user_layers.push(Box::new(move |router: Router| {
+            router.layer(axum::middleware::from_fn(f))
+        }));
+        self
+    }
+
+    /// Register an "after" hook that can transform every outgoing response.
+    ///
+    /// ```rust,ignore
+    /// app.after(|mut res: Response| async move {
+    ///     res.headers_mut().insert("X-Powered-By", "Oxide".parse().unwrap());
+    ///     res
+    /// })
+    /// ```
+    pub fn after<F, Fut>(mut self, f: F) -> Self
+    where
+        F: Fn(Response) -> Fut + Clone + Send + Sync + 'static,
+        Fut: Future<Output = Response> + Send + 'static,
+    {
+        self.user_layers.push(Box::new(move |router: Router| {
+            router.layer(axum::middleware::map_response(f))
+        }));
+        self
+    }
+
+    /// Add an arbitrary Tower `Layer` to the middleware stack.
+    ///
+    /// The layer is positioned between state injection and the panic catcher,
+    /// so it has access to `AppState` and any panics it causes are caught.
+    pub fn layer<L>(mut self, layer: L) -> Self
+    where
+        L: tower::Layer<axum::routing::Route> + Clone + Send + Sync + 'static,
+        L::Service: tower::Service<Request, Response = Response, Error = std::convert::Infallible>
+            + Clone
+            + Send
+            + Sync
+            + 'static,
+        <L::Service as tower::Service<Request>>::Future: Send + 'static,
+    {
+        self.user_layers.push(Box::new(move |router: Router| {
+            router.layer(layer)
+        }));
+        self
+    }
+
     // -- Internal: build the layered router -----------------------------------
 
     fn build_router(self, config: AppConfig) -> (Router, AppState) {
@@ -253,16 +328,21 @@ impl App {
         }
         let mut router = base.into_inner();
 
-        // Layer order (innermost → outermost):
-        //   Handler ← NormalizePath ← State ← CatchPanic ← RateLimit ← Timeout ← CORS ← Logger
+        // Layer application order: first applied = innermost = runs last.
+        // Request flow (outer → inner): Logger → CORS → Timeout → RateLimit → CatchPanic → State → UserHooks → Handler
+        //
+        // State injection wraps user hooks so AppState is available in hooks.
+        // CatchPanic wraps everything so panics in hooks/handlers become 500s.
 
-        // 1. Trailing-slash normalisation — strips `/path/` to `/path` before matching
-        router = router.layer(NormalizePathLayer::trim_trailing_slash());
+        // 1. User-registered hooks / layers (innermost — closest to handler)
+        for transform in self.user_layers {
+            router = transform(router);
+        }
 
-        // 2. State injection
+        // 2. State injection (wraps hooks — request has AppState before hooks run)
         router = router.layer(InjectStateLayer::new(app_state.clone()));
 
-        // 3. Panic recovery — handler panics become JSON 500 responses
+        // 3. Panic recovery — catches panics in hooks AND handlers
         router = router.layer(CatchPanicLayer::custom(middleware::panic_json_response));
 
         // 4. Rate limiting

@@ -243,14 +243,14 @@ Every Oxide type is a thin wrapper over a battle-tested crate (Axum, Tokio, Towe
 ## Middleware Stack Order
 
 ```
-Request → Logger → CORS → Timeout → RateLimit → CatchPanic → InjectState → NormalizePath → Router → Handler
+Request → Logger → CORS → Timeout → RateLimit → CatchPanic → InjectState → UserHooks → Router → Handler
 ```
 
 Layers are applied innermost-first in code, outermost-first at runtime:
 
-1. **NormalizePath** — strips trailing slashes before route matching
-2. **InjectState** — makes `AppState` available to extractors
-3. **CatchPanic** — converts handler panics into JSON 500 responses
+1. **UserHooks** — `before`/`after` hooks and custom `layer()` calls
+2. **InjectState** — makes `AppState` available to hooks and extractors
+3. **CatchPanic** — converts panics in hooks/handlers into JSON 500 responses
 4. **RateLimit** — per-IP sliding window; returns 429 with `Retry-After`
 5. **Timeout** — returns JSON 408 if handler exceeds deadline
 6. **CORS** — adds access-control headers to ALL responses (including errors)

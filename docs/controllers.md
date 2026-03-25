@@ -138,8 +138,25 @@ impl HealthController {
 
 ## Middleware Applies to Controllers
 
-All middleware configured on the `App` (rate limiting, CORS, timeout, logging) automatically applies to controller routes. No extra configuration needed.
+All middleware configured on the `App` (rate limiting, CORS, timeout, logging, before/after hooks) automatically applies to controller routes. No extra configuration needed.
 
-## Trailing Slashes
+## Controller-Level Middleware
 
-The framework normalizes trailing slashes automatically. Both `/api/users` and `/api/users/` resolve to the same handler.
+Controllers can define middleware that applies only to their own routes:
+
+```rust
+#[derive(Default)]
+struct AdminController;
+
+#[controller("/api/admin")]
+impl AdminController {
+    fn middleware(router: axum::Router) -> axum::Router {
+        router.layer(axum::middleware::from_fn(require_admin_role))
+    }
+
+    #[get("/dashboard")]
+    async fn dashboard(&self) -> ApiResponse<Dashboard> { /* ... */ }
+}
+```
+
+The `middleware` method receives the controller's `Router` (already containing all routes) and returns it with additional layers applied. This middleware does NOT leak to other controllers.

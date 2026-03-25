@@ -144,7 +144,7 @@ Oxide/
 | `axum` 0.8 | HTTP routing and handler framework |
 | `tokio` 1 | Async runtime |
 | `tower` 0.5 | Middleware layer/service abstractions |
-| `tower-http` 0.6 | CORS, trailing-slash normalization, panic recovery |
+| `tower-http` 0.6 | CORS, panic recovery |
 | `syn` 2 / `quote` 1 | Proc-macro parsing and code generation |
 | `serde` / `serde_json` / `serde_yaml` | Serialization and config parsing |
 | `tracing` / `tracing-subscriber` | Structured logging |

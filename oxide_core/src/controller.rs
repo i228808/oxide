@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use axum::Router;
+
 use crate::router::OxideRouter;
 use crate::state::AppState;
 
@@ -24,4 +26,16 @@ pub trait Controller: Send + Sync + Sized + 'static {
 
     /// Register all route methods on a fresh router.
     fn register(self: Arc<Self>) -> OxideRouter;
+
+    /// Override to apply controller-scoped middleware (auth, logging, etc.).
+    ///
+    /// The router passed in already contains all of this controller's routes.
+    /// Return the router with additional layers applied. The default is a
+    /// no-op (no extra middleware).
+    ///
+    /// If the `#[controller]` macro finds a `fn middleware(router: Router) -> Router`
+    /// method in the impl block, it generates this override automatically.
+    fn configure_router(router: Router) -> Router {
+        router
+    }
 }

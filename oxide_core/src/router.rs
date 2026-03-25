@@ -29,6 +29,18 @@ impl<S: Clone + Send + Sync + 'static> OxideRouter<S> {
         }
     }
 
+    /// Wrap an existing `axum::Router` in an `OxideRouter`.
+    pub fn from_router(router: Router<S>) -> Self {
+        Self { inner: router }
+    }
+
+    /// Nest this router under a prefix, consuming and returning `self`.
+    pub fn nest_self(self, prefix: &str) -> Self {
+        Self {
+            inner: Router::new().nest(prefix, self.inner),
+        }
+    }
+
     /// Register a handler for the given method and path.
     pub fn route<H, T>(mut self, method: Method, path: &str, handler: H) -> Self
     where

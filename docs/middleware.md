@@ -9,10 +9,12 @@ When `App::run()` is called, middleware is applied in this order (outermost firs
 ```
 Request
   → Request Logger  (captures start time)
+  → CORS            (adds cross-origin headers)
   → Request Timeout (enforces max duration)
   → Rate Limiter    (per-IP request counting)
-  → CORS            (adds cross-origin headers)
-  → State Injection (adds AppState to request)
+  → Panic Recovery  (catches panics → 500 JSON)
+  → State Injection (adds AppState to request extensions)
+  → User Hooks      (before/after hooks, custom layers)
   → Router → Handler
   ← (response flows back through each layer)
 ```
@@ -156,6 +158,74 @@ App::new()
     .run();
 ```
 
+## Lifecycle Hooks
+
+### Before Hook
+
+Runs on every request before the handler. Can modify the request, short-circuit
+with an error response, or add tracing/metrics.
+
+```rust
+use axum::{extract::Request, middleware::Next, response::Response};
+
+async fn log_request(req: Request, next: Next) -> Response {
+    println!("→ {} {}", req.method(), req.uri());
+    next.run(req).await
+}
+
+App::new()
+    .before(log_request)
+    .run();
+```
+
+### After Hook
+
+Transforms every outgoing response. Useful for adding headers, metrics, or
+rewriting error bodies.
+
+```rust
+async fn add_powered_by(mut res: Response) -> Response {
+    res.headers_mut().insert("X-Powered-By", "Oxide".parse().unwrap());
+    res
+}
+
+App::new()
+    .after(add_powered_by)
+    .run();
+```
+
+### Custom Tower Layer
+
+For advanced use-cases, register an arbitrary Tower `Layer`:
+
+```rust
+App::new()
+    .layer(my_custom_tower_layer)
+    .run();
+```
+
+Hooks and custom layers have access to `AppState` (via request extensions) and
+panics within them are caught by the CatchPanic layer.
+
+## Controller-Level Middleware
+
+Controllers can define middleware that applies only to their own routes:
+
+```rust
+#[controller("/api/admin")]
+impl AdminController {
+    fn middleware(router: axum::Router) -> axum::Router {
+        router.layer(axum::middleware::from_fn(require_admin_role))
+    }
+
+    #[get("/dashboard")]
+    async fn dashboard(&self) -> ApiResponse<Dashboard> { /* ... */ }
+}
+```
+
+Other controllers are unaffected — `require_admin_role` only runs for
+`/api/admin/*` routes.
+
 ## Writing Custom Middleware
 
 Oxide uses Axum's middleware system which is built on Tower. You can write custom middleware as async functions:
@@ -178,16 +248,19 @@ async fn require_auth(request: Request, next: Next) -> Result<Response, StatusCo
 }
 ```
 
-Apply it to a specific router group:
+Apply it globally or to a specific router group:
 
 ```rust
-use axum::middleware;
+// Global (via App::before)
+App::new().before(require_auth).run();
 
-fn protected_routes() -> axum::Router {
-    OxideRouter::new()
-        .get("/secret", secret_handler)
-        .into_inner()
-        .layer(middleware::from_fn(require_auth))
+// Controller-scoped (via fn middleware)
+#[controller("/api/secure")]
+impl SecureController {
+    fn middleware(router: axum::Router) -> axum::Router {
+        router.layer(axum::middleware::from_fn(require_auth))
+    }
+    // ...
 }
 ```
 
@@ -199,4 +272,9 @@ fn protected_routes() -> axum::Router {
 | Rate Limiting | `.rate_limit(max, window_secs)` | Off | 429 JSON |
 | CORS | `.cors_permissive()` / `.cors_origins([...])` | Off | — |
 | Request Timeout | `.request_timeout(secs)` | Off | 408 JSON |
+| Panic Recovery | — | Always on | 500 JSON |
 | Graceful Shutdown | — | Always on | — |
+| Before Hook | `.before(fn)` | — | — |
+| After Hook | `.after(fn)` | — | — |
+| Custom Layer | `.layer(tower_layer)` | — | — |
+| Controller Middleware | `fn middleware(Router) -> Router` | — | — |

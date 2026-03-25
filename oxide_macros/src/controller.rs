@@ -21,11 +21,15 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> Result<TokenStream> {
 
     let mut routes = Vec::new();
     let mut has_new = false;
+    let mut has_middleware = false;
 
     for item in &impl_block.items {
         if let ImplItem::Fn(method) = item {
             if method.sig.ident == "new" {
                 has_new = true;
+            }
+            if method.sig.ident == "middleware" {
+                has_middleware = true;
             }
             if let Some(route) = parse_route_method(method)? {
                 routes.push(route);
@@ -80,6 +84,16 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> Result<TokenStream> {
         quote! { Self::default() }
     };
 
+    let configure_router_impl = if has_middleware {
+        quote! {
+            fn configure_router(router: ::axum::Router) -> ::axum::Router {
+                Self::middleware(router)
+            }
+        }
+    } else {
+        quote! {}
+    };
+
     let output = quote! {
         #impl_block
 
@@ -95,6 +109,8 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> Result<TokenStream> {
                 #(#registrations)*
                 __router
             }
+
+            #configure_router_impl
         }
     };
 
