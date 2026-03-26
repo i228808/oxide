@@ -80,6 +80,16 @@ impl<T: Serialize> ApiResponse<T> {
         Self::error(StatusCode::NOT_FOUND, message)
     }
 
+    /// 401 Unauthorized.
+    pub fn unauthorized(message: impl Into<String>) -> Self {
+        Self::error(StatusCode::UNAUTHORIZED, message)
+    }
+
+    /// 403 Forbidden.
+    pub fn forbidden(message: impl Into<String>) -> Self {
+        Self::error(StatusCode::FORBIDDEN, message)
+    }
+
     /// 500 Internal Server Error.
     pub fn internal_error(message: impl Into<String>) -> Self {
         Self::error(StatusCode::INTERNAL_SERVER_ERROR, message)

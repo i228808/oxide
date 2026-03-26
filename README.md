@@ -139,6 +139,11 @@ Oxide/
 | `Config` | Extractor for `AppConfig` in handlers |
 | `Data<T>` | Extractor for user-provided state in handlers |
 | `Inject<T>` | Alias for `Data<T>`, reads naturally in controller methods |
+| `AuthConfig` / `App::auth` | HS256 JWT from `Authorization: Bearer` and/or a session cookie |
+| `AuthClaims` | Decoded JWT subject + roles (in request extensions) |
+| `Authenticated`, `OptionalAuth` | Extractors for logged-in / optional identity |
+| `RequireRole<R>`, `RoleName` | Role guard (403 when role missing) |
+| `encode_token` | Mint a JWT for login handlers / tests |
 | `Json` | Re-export of `axum::Json` for request/response bodies |
 | `Path` | Re-export of `axum::extract::Path` for path parameters |
 | `StatusCode` | Re-export of `axum::http::StatusCode` |
@@ -151,6 +156,7 @@ Oxide/
 - [Configuration](docs/configuration.md) — YAML files, environment variables, defaults
 - [State Management](docs/state.md) — Shared state, Config/Data extractors, thread safety
 - [Middleware](docs/middleware.md) — Request logging, middleware architecture, custom middleware
+- [Authentication](docs/auth.md) — JWT, session cookies, role guards
 - [Architecture](docs/architecture.md) — Crate layout, data flow, design principles
 - [CLI](docs/cli.md) — `oxide new`, `generate`, `run`, `test`, `bench`
 

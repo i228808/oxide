@@ -14,6 +14,7 @@ Request
   → Rate Limiter    (per-IP request counting)
   → Panic Recovery  (catches panics → 500 JSON)
   → State Injection (adds AppState to request extensions)
+  → JWT / session auth (optional, `App::auth` — validates Bearer / cookie, adds `AuthClaims`)
   → User Hooks      (before/after hooks, custom layers)
   → Router → Handler
   ← (response flows back through each layer)

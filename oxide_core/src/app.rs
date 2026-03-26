@@ -16,6 +16,7 @@ use tracing::info;
 use crate::config::AppConfig;
 use crate::controller::Controller;
 use crate::logging;
+use crate::auth::{AuthConfig, AuthLayer};
 use crate::middleware::{self, InjectStateLayer, RequestTimeoutLayer};
 use crate::rate_limit::RateLimitLayer;
 use crate::router::{Method, OxideRouter};
@@ -65,6 +66,8 @@ pub struct App {
     /// Applied between State injection and CatchPanic (can access state,
     /// panics are still caught).
     user_layers: Vec<RouterTransform>,
+    /// Optional JWT / session-cookie auth (runs after user hooks, before state injection).
+    auth: Option<AuthConfig>,
 }
 
 impl App {
@@ -85,6 +88,7 @@ impl App {
             request_timeout: None,
             controller_factories: Vec::new(),
             user_layers: Vec::new(),
+            auth: None,
         }
     }
 
@@ -252,6 +256,22 @@ impl App {
         self
     }
 
+    /// Enable JWT authentication from `Authorization: Bearer` and/or a session cookie.
+    ///
+    /// Inserts [`crate::auth::AuthClaims`] into request extensions when the token is valid.
+    /// Invalid or expired tokens return **401** before your handler runs.
+    ///
+    /// Relative to state and hooks: application state is injected first, then JWT is validated, then
+    /// [`App::before`](Self::before) / [`App::layer`](Self::layer) hooks, then the route handler.
+    pub fn auth(mut self, config: AuthConfig) -> Self {
+        assert!(
+            !config.secret.is_empty(),
+            "AuthConfig.secret must not be empty"
+        );
+        self.auth = Some(config);
+        self
+    }
+
     // -- Lifecycle hooks & custom middleware -----------------------------------
 
     /// Register a "before" hook that runs on every request.
@@ -328,39 +348,44 @@ impl App {
         }
         let mut router = base.into_inner();
 
-        // Layer application order: first applied = innermost = runs last.
-        // Request flow (outer → inner): Logger → CORS → Timeout → RateLimit → CatchPanic → State → UserHooks → Handler
+        // Layer application order: first applied = innermost = closest to the route handler.
+        // Request flow (outer → inner): Logger → CORS → Timeout → RateLimit → CatchPanic →
+        // InjectState → JwtAuth → UserHooks → Route handler
         //
-        // State injection wraps user hooks so AppState is available in hooks.
-        // CatchPanic wraps everything so panics in hooks/handlers become 500s.
+        // User hooks run after JWT validation so `OptionalAuth` / [`AuthClaims`] are visible in `before` / custom layers.
 
-        // 1. User-registered hooks / layers (innermost — closest to handler)
+        // 1. User-registered hooks / layers (innermost)
         for transform in self.user_layers {
             router = transform(router);
         }
 
-        // 2. State injection (wraps hooks — request has AppState before hooks run)
+        // 2. JWT / session cookie auth
+        if let Some(auth_cfg) = self.auth {
+            router = router.layer(AuthLayer::new(auth_cfg));
+        }
+
+        // 3. State injection
         router = router.layer(InjectStateLayer::new(app_state.clone()));
 
-        // 3. Panic recovery — catches panics in hooks AND handlers
+        // 4. Panic recovery — catches panics in hooks AND handlers
         router = router.layer(CatchPanicLayer::custom(middleware::panic_json_response));
 
-        // 4. Rate limiting
+        // 5. Rate limiting
         if let Some((max, window)) = self.rate_limit {
             router = router.layer(RateLimitLayer::new(max, window));
         }
 
-        // 5. Request timeout
+        // 6. Request timeout
         if let Some(timeout) = self.request_timeout {
             router = router.layer(RequestTimeoutLayer::new(timeout));
         }
 
-        // 6. CORS (wraps everything — headers on ALL responses including 429/408/500)
+        // 7. CORS (wraps everything — headers on ALL responses including 429/408/500)
         if let Some(cors) = self.cors {
             router = router.layer(cors);
         }
 
-        // 7. Request logging (outermost)
+        // 8. Request logging (outermost)
         if self.request_logging {
             router = router.layer(axum::middleware::from_fn(middleware::request_logger));
         }

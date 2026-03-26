@@ -1,4 +1,5 @@
 mod app;
+pub mod auth;
 mod config;
 mod controller;
 mod extract;
@@ -12,6 +13,10 @@ mod state;
 pub use app::{App, TestServer};
 pub use config::AppConfig;
 pub use controller::Controller;
+pub use auth::{
+    encode_token, AuthClaims, AuthConfig, AuthLayer, AuthRejection, Authenticated, OptionalAuth,
+    RequireRole, RoleName,
+};
 pub use extract::{Config, Data, Inject};
 pub use response::ApiResponse;
 pub use router::{Method, OxideRouter};

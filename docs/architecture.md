@@ -26,6 +26,7 @@ oxide_core/src/
 ├── config.rs       AppConfig, YAML + env loader
 ├── state.rs        AppState, TypeMap (thread-safe shared state container)
 ├── extract.rs      Config, Data<T>, Inject<T> extractors for handlers
+├── auth/           JWT/session auth layer, AuthClaims, role extractors
 ├── middleware.rs    Request logger + state injection tower Layer
 ├── rate_limit.rs   Per-IP rate limiter tower Layer
 └── logging.rs      tracing-subscriber initialization
@@ -44,6 +45,10 @@ pub use app::{App, TestServer};
 pub use config::AppConfig;
 pub use controller::Controller;
 pub use extract::{Config, Data, Inject};
+pub use auth::{
+    encode_token, AuthClaims, AuthConfig, AuthLayer, AuthRejection, Authenticated, OptionalAuth,
+    RequireRole, RoleName,
+};
 pub use response::ApiResponse;
 pub use router::{Method, OxideRouter};
 pub use state::AppState;
@@ -69,6 +74,7 @@ App::new()                     → init logging, default config, empty router
     .rate_limit(max, window)   → per-IP rate limiting
     .cors_permissive()         → allow any origin
     .request_timeout(secs)     → per-request timeout
+    .auth(config)               → JWT (Bearer + optional session cookie) + role extractors
     .disable_request_logging() → opt out of per-request logging
     .run()                     → load config, build state, resolve controllers, apply middleware, serve
 ```
