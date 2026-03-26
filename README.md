@@ -83,6 +83,22 @@ That gives you:
 - Graceful shutdown on Ctrl+C / SIGTERM
 - Standardized JSON response envelopes
 
+## CLI (`oxide`)
+
+Scaffold apps and generate controllers without boilerplate:
+
+```bash
+cargo install --path oxide_cli   # installs `oxide` on PATH
+oxide new my-api --oxide path=../oxide_core
+cd my-api && cargo run
+
+oxide generate controller Product --prefix /api/products
+oxide generate route ProductController GET /featured
+oxide run -- --release
+```
+
+From the Oxide repo, `oxide test` runs the full workspace test suite; `oxide bench` runs Criterion benchmarks plus the load-test example. See [docs/cli.md](docs/cli.md) for all commands and flags.
+
 ## Project Structure
 
 ```
@@ -105,7 +121,7 @@ Oxide/
 │       └── hello.rs           # Full working example
 │
 ├── oxide_macros/              # Proc-macro crate (#[controller], route attrs)
-└── oxide_cli/                 # CLI tooling (future)
+└── oxide_cli/                 # `oxide` CLI — scaffold, generate, run, test, bench
 ```
 
 ## Public API at a Glance
@@ -136,6 +152,7 @@ Oxide/
 - [State Management](docs/state.md) — Shared state, Config/Data extractors, thread safety
 - [Middleware](docs/middleware.md) — Request logging, middleware architecture, custom middleware
 - [Architecture](docs/architecture.md) — Crate layout, data flow, design principles
+- [CLI](docs/cli.md) — `oxide new`, `generate`, `run`, `test`, `bench`
 
 ## Dependencies
 

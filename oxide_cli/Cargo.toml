@@ -2,5 +2,13 @@
 name = "oxide_cli"
 version.workspace = true
 edition.workspace = true
+description = "CLI for the Oxide web framework — scaffold, generate, run, test, bench"
+license.workspace = true
+
+[[bin]]
+name = "oxide"
+path = "src/main.rs"
 
 [dependencies]
+clap = { version = "4", features = ["derive", "env"] }
+anyhow = "1"

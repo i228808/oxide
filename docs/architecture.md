@@ -9,7 +9,7 @@ Oxide/
 ├── Cargo.toml          # Workspace definition
 ├── oxide_core/         # Framework library (the main crate)
 ├── oxide_macros/       # Proc-macro crate (#[controller], route attributes)
-└── oxide_cli/          # CLI tooling (placeholder — future)
+└── oxide_cli/          # `oxide` CLI — scaffold, codegen, run, test, bench
 ```
 
 `oxide_core` is the main library. `oxide_macros` provides proc macros and is re-exported through `oxide_core` so users only need one dependency.
