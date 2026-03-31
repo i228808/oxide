@@ -1,5 +1,5 @@
 [workspace]
-members = ["oxide_core", "oxide_macros", "oxide_cli", "oxide_db"]
+members = ["oxide-framework-core", "oxide-framework-macros", "oxide-framework-cli", "oxide-framework-db"]
 resolver = "2"
 
 [workspace.package]
