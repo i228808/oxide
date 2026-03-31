@@ -1,6 +1,6 @@
 //! Bare Axum server for load testing comparison.
 //!
-//! Start:  `cargo run -p oxide_core --release --example bench_raw_axum`
+//! Start:  `cargo run -p oxide_framework_core --release --example bench_raw_axum`
 //! Test:   `wrk -t4 -c100 -d30s http://127.0.0.1:3001/json`
 
 use axum::extract::Path;
@@ -38,3 +38,4 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
+

@@ -91,3 +91,4 @@ impl IntoResponse for AuthRejection {
         }
     }
 }
+

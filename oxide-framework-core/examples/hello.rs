@@ -1,4 +1,4 @@
-use oxide_core::{controller, ApiResponse, App, AppState, Config, Data, Json, OxideRouter, Path};
+use oxide_framework_core::{controller, ApiResponse, App, AppState, Config, Data, Json, OxideRouter, Path};
 use serde::Serialize;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -196,3 +196,4 @@ fn main() {
         .controller::<ProductController>()
         .run();
 }
+

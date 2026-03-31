@@ -26,5 +26,6 @@ pub use axum::extract::Path;
 pub use axum::http::StatusCode;
 pub use axum::Json;
 
-// Re-export proc macro so users only need `use oxide_core::controller;`
-pub use oxide_macros::controller;
+// Re-export proc macro so users only need `use oxide_framework_core::controller;`
+pub use oxide_framework_macros::controller;
+

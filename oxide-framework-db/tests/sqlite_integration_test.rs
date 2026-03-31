@@ -1,12 +1,12 @@
-use oxide_core::{App, ApiResponse, Data};
-use oxide_db::{AppDbExt, Database, Sqlite};
+use oxide_framework_core::{App, ApiResponse, Data};
+use oxide_framework_db::{AppDbExt, Database, Sqlite};
 use reqwest::StatusCode;
 use std::sync::Arc;
 use tokio::task::JoinSet;
 
 // A basic handler that uses the injected database pool
 // We will test if the DI system correctly provides the connection
-async fn get_user(Data(db): Data<oxide_db::DbPool<Sqlite>>) -> ApiResponse<String> {
+async fn get_user(Data(db): Data<oxide_framework_db::DbPool<Sqlite>>) -> ApiResponse<String> {
     // Attempt a basic query to prove the connection works
     let result: (String,) = sqlx::query_as("SELECT 'Hello Oxide'")
         .fetch_one(&*db)
@@ -65,3 +65,4 @@ async fn test_db_concurrency_and_pool_limits() {
         res.unwrap();
     }
 }
+

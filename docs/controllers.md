@@ -5,7 +5,7 @@ Controllers group related route handlers into a struct. The `#[controller]` macr
 ## Defining a Controller
 
 ```rust
-use oxide_core::{controller, ApiResponse, AppState, Json, Path};
+use oxide_framework_core::{controller, ApiResponse, AppState, Json, Path};
 
 struct UserController {
     db: DbPool,
@@ -160,3 +160,4 @@ impl AdminController {
 ```
 
 The `middleware` method receives the controller's `Router` (already containing all routes) and returns it with additional layers applied. This middleware does NOT leak to other controllers.
+

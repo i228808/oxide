@@ -173,3 +173,4 @@ fn auth_error_response(status: StatusCode, message: &str) -> Response {
     });
     (status, Json(body)).into_response()
 }
+

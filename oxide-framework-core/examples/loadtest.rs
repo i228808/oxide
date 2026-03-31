@@ -3,7 +3,7 @@
 //! Spins up a raw Axum server and an Oxide server, hammers both with
 //! concurrent requests, and prints a comparison table.
 //!
-//! Run:  `cargo run -p oxide_core --release --example loadtest`
+//! Run:  `cargo run -p oxide_framework_core --release --example loadtest`
 //!
 //! Options via env vars:
 //!   DURATION=10    — test duration in seconds (default 10)
@@ -13,7 +13,7 @@ use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::Router;
-use oxide_core::{controller, ApiResponse, App};
+use oxide_framework_core::{controller, ApiResponse, App};
 use serde::Serialize;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -51,10 +51,10 @@ async fn axum_post(axum::Json(b): axum::Json<serde_json::Value>) -> impl IntoRes
 async fn oxide_json() -> ApiResponse<Msg> {
     ApiResponse::ok(Msg { text: "hello".into() })
 }
-async fn oxide_path(oxide_core::Path(id): oxide_core::Path<u64>) -> ApiResponse<User> {
+async fn oxide_path(oxide_framework_core::Path(id): oxide_framework_core::Path<u64>) -> ApiResponse<User> {
     ApiResponse::ok(User { id, name: format!("user-{id}") })
 }
-async fn oxide_post(oxide_core::Json(b): oxide_core::Json<serde_json::Value>) -> ApiResponse<serde_json::Value> {
+async fn oxide_post(oxide_framework_core::Json(b): oxide_framework_core::Json<serde_json::Value>) -> ApiResponse<serde_json::Value> {
     ApiResponse::created(b)
 }
 
@@ -292,3 +292,4 @@ async fn main() {
     println!();
     println!("=== Done ===");
 }
+

@@ -5,7 +5,7 @@ Oxide provides HS256 JWT validation via `App::auth` and extractors for handlers.
 ## Setup
 
 ```rust
-use oxide_core::{App, AuthConfig};
+use oxide_framework_core::{App, AuthConfig};
 
 App::new()
     .auth(AuthConfig::new(std::env::var("JWT_SECRET").unwrap().into_bytes()))
@@ -31,7 +31,7 @@ The middleware decodes a JSON payload with:
 Mint tokens in a login handler with `encode_token`:
 
 ```rust
-use oxide_core::{encode_token, AuthClaims};
+use oxide_framework_core::{encode_token, AuthClaims};
 
 let claims = AuthClaims::new("user-42", vec!["user".into()], 3600);
 let jwt = encode_token(&claims, &secret)?;
@@ -48,7 +48,7 @@ let jwt = encode_token(&claims, &secret)?;
 ### Role guard (`RoleName`)
 
 ```rust
-use oxide_core::{RequireRole, RoleName};
+use oxide_framework_core::{RequireRole, RoleName};
 
 struct Admin;
 impl RoleName for Admin {
@@ -67,3 +67,4 @@ Application state is injected, then JWT is validated, then global `before` / `Ap
 ## Dependencies
 
 Uses `jsonwebtoken` (HS256) and `cookie` for the `Cookie` header.
+

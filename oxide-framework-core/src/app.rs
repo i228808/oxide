@@ -32,7 +32,7 @@ type RouterTransform = Box<dyn FnOnce(Router) -> Router>;
 /// # Example
 ///
 /// ```rust,no_run
-/// use oxide_core::{App, ApiResponse, Config};
+/// use oxide_framework_core::{App, ApiResponse, Config};
 /// use serde::Serialize;
 ///
 /// #[derive(Serialize)]
@@ -537,3 +537,4 @@ async fn shutdown_signal() {
         info!("received Ctrl+C, shutting down…");
     }
 }
+

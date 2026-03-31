@@ -4,7 +4,7 @@
 use axum::extract::Request;
 use axum::middleware::Next;
 use axum::response::Response;
-use oxide_core::{controller, ApiResponse, App, AppState};
+use oxide_framework_core::{controller, ApiResponse, App, AppState};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -573,4 +573,5 @@ async fn timeout_applies_to_hooks() {
     let res = reqwest::get(server.url("/")).await.unwrap();
     assert_eq!(res.status(), 408);
 }
+
 

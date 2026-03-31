@@ -10,3 +10,4 @@ description = "A production-ready, zero-boilerplate web framework for Rust."
 repository = "https://github.com/i228808/oxide"
 homepage = "https://github.com/i228808/oxide"
 readme = "README.md"
+

@@ -1,4 +1,4 @@
-use oxide_core::{ApiResponse, App};
+use oxide_framework_core::{ApiResponse, App};
 use serde::Serialize;
 use std::time::Duration;
 
@@ -17,7 +17,7 @@ async fn oxide_json() -> ApiResponse<Msg> {
     ApiResponse::ok(Msg { text: "hello".into() })
 }
 
-async fn oxide_path(oxide_core::Path(id): oxide_core::Path<u64>) -> ApiResponse<User> {
+async fn oxide_path(oxide_framework_core::Path(id): oxide_framework_core::Path<u64>) -> ApiResponse<User> {
     ApiResponse::ok(User { id, name: format!("user-{id}") })
 }
 
@@ -34,3 +34,4 @@ async fn main() {
         .serve()
         .await;
 }
+

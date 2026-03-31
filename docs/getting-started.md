@@ -14,13 +14,13 @@ cargo --version
 
 ## Adding Oxide to Your Project
 
-Oxide is structured as a Cargo workspace. The framework library is `oxide_core`.
+Oxide is structured as a Cargo workspace. The framework library is `oxide_framework_core`.
 
 If you're building within the Oxide workspace, add it as a path dependency:
 
 ```toml
 [dependencies]
-oxide_core = { path = "../oxide_core" }
+oxide_framework_core = { path = "../oxide_framework_core" }
 serde = { version = "1", features = ["derive"] }
 ```
 
@@ -31,7 +31,7 @@ The `serde` dependency is needed for your own types that you want to serialize i
 Create a file `src/main.rs`:
 
 ```rust
-use oxide_core::{App, ApiResponse};
+use oxide_framework_core::{App, ApiResponse};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -61,7 +61,7 @@ cargo run
 You should see:
 
 ```
-2026-03-26T00:00:00.000000Z  INFO oxide_core::app: Oxide server started name=oxide-app address=127.0.0.1:3000
+2026-03-26T00:00:00.000000Z  INFO oxide_framework_core::app: Oxide server started name=oxide-app address=127.0.0.1:3000
 ```
 
 Visit `http://127.0.0.1:3000/` and you'll get:
@@ -96,7 +96,7 @@ The server now starts on port 8080. See [Configuration](configuration.md) for th
 ## Adding More Routes
 
 ```rust
-use oxide_core::{App, ApiResponse, Path};
+use oxide_framework_core::{App, ApiResponse, Path};
 
 async fn get_item(Path(id): Path<u64>) -> ApiResponse<String> {
     ApiResponse::ok(format!("Item #{id}"))
@@ -153,3 +153,4 @@ See [Responses](responses.md) for the full response API.
 - [Responses](responses.md) — Understand the standardized JSON envelope
 - [Configuration](configuration.md) — YAML, env vars, and precedence rules
 - [Architecture](architecture.md) — How the internals fit together
+

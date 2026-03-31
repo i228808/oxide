@@ -16,7 +16,7 @@ This `AppState` is injected into every request via a middleware layer and extrac
 Use the `Config` extractor to access `AppConfig` in any handler:
 
 ```rust
-use oxide_core::{ApiResponse, Config};
+use oxide_framework_core::{ApiResponse, Config};
 
 async fn handler(Config(cfg): Config) -> ApiResponse<String> {
     ApiResponse::ok(format!("Running on port {}", cfg.port))
@@ -30,7 +30,7 @@ async fn handler(Config(cfg): Config) -> ApiResponse<String> {
 Use `App::state()` to register any `Send + Sync + 'static` value:
 
 ```rust
-use oxide_core::App;
+use oxide_framework_core::App;
 
 struct DbPool { /* ... */ }
 struct CacheClient { /* ... */ }
@@ -54,7 +54,7 @@ Each type can only be registered once (last write wins for the same type).
 Use the `Data<T>` extractor to access registered state in handlers:
 
 ```rust
-use oxide_core::{ApiResponse, Data};
+use oxide_framework_core::{ApiResponse, Data};
 use std::sync::Arc;
 
 async fn handler(Data(pool): Data<DbPool>) -> ApiResponse<String> {
@@ -146,7 +146,7 @@ App::new().state(shared_list)
 For advanced use cases, you can access the full `AppState` directly:
 
 ```rust
-use oxide_core::AppState;
+use oxide_framework_core::AppState;
 use axum::extract::Extension;
 
 async fn handler(Extension(state): Extension<AppState>) -> ApiResponse<Info> {
@@ -165,3 +165,4 @@ internal error: missing state (my_app::DbPool)
 ```
 
 This makes it easy to spot missing `.state()` calls during development.
+

@@ -1,6 +1,6 @@
 /// Integration tests for the `#[controller]` proc macro and DI system.
 
-use oxide_core::{controller, ApiResponse, App, Json, Path, AppState};
+use oxide_framework_core::{controller, ApiResponse, App, Json, Path, AppState};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -364,3 +364,4 @@ async fn concurrent_controller_requests() {
         h.await.unwrap();
     }
 }
+

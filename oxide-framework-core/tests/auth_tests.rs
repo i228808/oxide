@@ -1,6 +1,6 @@
 //! JWT auth, session cookie, and role guards.
 
-use oxide_core::{
+use oxide_framework_core::{
     encode_token, ApiResponse, App, AuthClaims, AuthConfig, Authenticated, OptionalAuth, RequireRole,
     RoleName,
 };
@@ -176,3 +176,4 @@ async fn authenticated_extractor_requires_login() {
     let res = client.get(server.url("/me")).send().await.unwrap();
     assert_eq!(res.status(), 401);
 }
+

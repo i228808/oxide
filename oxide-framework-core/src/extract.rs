@@ -12,7 +12,7 @@ use crate::state::AppState;
 /// # Example
 ///
 /// ```rust,ignore
-/// use oxide_core::{ApiResponse, Config};
+/// use oxide_framework_core::{ApiResponse, Config};
 ///
 /// async fn handler(Config(cfg): Config) -> ApiResponse<String> {
 ///     ApiResponse::ok(format!("Welcome to {}", cfg.app_name))
@@ -42,7 +42,7 @@ impl<S: Send + Sync> FromRequestParts<S> for Config {
 /// # Example
 ///
 /// ```rust,ignore
-/// use oxide_core::{ApiResponse, Data};
+/// use oxide_framework_core::{ApiResponse, Data};
 /// use std::sync::Arc;
 ///
 /// struct DbPool { /* ... */ }
@@ -165,4 +165,5 @@ where
             })
     }
 }
+
 

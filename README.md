@@ -45,7 +45,7 @@ App::new()
 ## Quickstart — Controller Style
 
 ```rust
-use oxide_core::{controller, App, AppState, ApiResponse, Json, Path};
+use oxide_framework_core::{controller, App, AppState, ApiResponse, Json, Path};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
@@ -88,7 +88,7 @@ fn main() {
 ## Quickstart — Functional Style
 
 ```rust
-use oxide_core::{App, ApiResponse, Config};
+use oxide_framework_core::{App, ApiResponse, Config};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -127,7 +127,7 @@ Scaffold apps and generate controllers without boilerplate:
 
 ```bash
 cargo install --path oxide_cli   # installs `oxide` on PATH
-oxide new my-api --oxide path=../oxide_core
+oxide new my-api --oxide path=../oxide_framework_core
 cd my-api && cargo run
 
 oxide generate controller Product --prefix /api/products
@@ -144,7 +144,7 @@ Oxide/
 ├── Cargo.toml                 # Workspace root
 ├── app.yaml                   # Application config
 │
-├── oxide_core/                # Framework library
+├── oxide_framework_core/                # Framework library
 │   ├── src/
 │   │   ├── lib.rs             # Public API exports
 │   │   ├── app.rs             # App builder + server lifecycle
@@ -158,7 +158,7 @@ Oxide/
 │   └── examples/
 │       └── hello.rs           # Full working example
 │
-├── oxide_macros/              # Proc-macro crate (#[controller], route attrs)
+├── oxide_framework_macros/              # Proc-macro crate (#[controller], route attrs)
 └── oxide_cli/                 # `oxide` CLI — scaffold, generate, run, test, bench
 ```
 
@@ -213,7 +213,7 @@ Oxide/
 ## Running the Example
 
 ```bash
-cd oxide_core
+cd oxide_framework_core
 cargo run --example hello
 ```
 
@@ -239,12 +239,13 @@ curl http://127.0.0.1:3000/stats
 Server logs:
 
 ```
-INFO oxide_core::app: Oxide server started name=my-oxide-app address=127.0.0.1:3000
-INFO oxide_core::middleware: request completed method=GET path=/ status=200 latency_ms=0
-INFO oxide_core::middleware: request completed method=POST path=/api/users status=201 latency_ms=0
-INFO oxide_core::middleware: request completed method=GET path=/api/users/0 status=404 latency_ms=0
+INFO oxide_framework_core::app: Oxide server started name=my-oxide-app address=127.0.0.1:3000
+INFO oxide_framework_core::middleware: request completed method=GET path=/ status=200 latency_ms=0
+INFO oxide_framework_core::middleware: request completed method=POST path=/api/users status=201 latency_ms=0
+INFO oxide_framework_core::middleware: request completed method=GET path=/api/users/0 status=404 latency_ms=0
 ```
 
 ## License
 
 MIT
+

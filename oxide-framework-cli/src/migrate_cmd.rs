@@ -11,3 +11,4 @@ pub fn run(args: &[String]) -> Result<()> {
     );
     Ok(())
 }
+

@@ -1,6 +1,6 @@
 //! Micro-benchmarks: raw Axum vs Oxide framework overhead.
 //!
-//! Run:  `cargo bench -p oxide_core`
+//! Run:  `cargo bench -p oxide_framework_core`
 //!
 //! Each benchmark starts real HTTP servers on random ports and measures
 //! round-trip latency through reqwest.  This captures the true cost of
@@ -13,7 +13,7 @@ use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::Router;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxide_core::{controller, ApiResponse, App};
+use oxide_framework_core::{controller, ApiResponse, App};
 use serde::Serialize;
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -61,12 +61,12 @@ async fn oxide_json() -> ApiResponse<Msg> {
     ApiResponse::ok(Msg { text: "hello".into() })
 }
 
-async fn oxide_path(oxide_core::Path(id): oxide_core::Path<u64>) -> ApiResponse<User> {
+async fn oxide_path(oxide_framework_core::Path(id): oxide_framework_core::Path<u64>) -> ApiResponse<User> {
     ApiResponse::ok(User { id, name: format!("user-{id}") })
 }
 
 async fn oxide_post(
-    oxide_core::Json(body): oxide_core::Json<serde_json::Value>,
+    oxide_framework_core::Json(body): oxide_framework_core::Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     ApiResponse::created(body)
 }
@@ -86,7 +86,7 @@ impl BenchController {
     }
 
     #[get("/users/{id}")]
-    async fn user_handler(&self, oxide_core::Path(id): oxide_core::Path<u64>) -> ApiResponse<User> {
+    async fn user_handler(&self, oxide_framework_core::Path(id): oxide_framework_core::Path<u64>) -> ApiResponse<User> {
         ApiResponse::ok(User { id, name: format!("user-{id}") })
     }
 }
@@ -372,3 +372,4 @@ fn bench_concurrent(c: &mut Criterion) {
 
 criterion_group!(benches, bench_oneshot, bench_roundtrip, bench_concurrent);
 criterion_main!(benches);
+

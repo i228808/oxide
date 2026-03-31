@@ -1,5 +1,5 @@
 [package]
-name = "oxide-framework-macros"
+name = "oxide-framework-core"
 version.workspace = true
 edition.workspace = true
 description = "Core runtime and framework logic for the Oxide web framework."
@@ -29,3 +29,4 @@ criterion = { version = "0.5", features = ["async_tokio"] }
 [[bench]]
 name = "overhead"
 harness = false
+

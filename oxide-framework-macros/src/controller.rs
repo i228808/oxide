@@ -97,15 +97,15 @@ pub fn expand(attr: TokenStream, item: TokenStream) -> Result<TokenStream> {
     let output = quote! {
         #impl_block
 
-        impl ::oxide_core::Controller for #self_ty {
+        impl ::oxide_framework_core::Controller for #self_ty {
             const PREFIX: &'static str = #prefix_str;
 
-            fn from_state(state: &::oxide_core::AppState) -> Self {
+            fn from_state(state: &::oxide_framework_core::AppState) -> Self {
                 #from_state_body
             }
 
-            fn register(self: ::std::sync::Arc<Self>) -> ::oxide_core::OxideRouter {
-                let mut __router = ::oxide_core::OxideRouter::new();
+            fn register(self: ::std::sync::Arc<Self>) -> ::oxide_framework_core::OxideRouter {
+                let mut __router = ::oxide_framework_core::OxideRouter::new();
                 #(#registrations)*
                 __router
             }
@@ -170,3 +170,4 @@ fn strip_route_attrs(impl_block: &mut ItemImpl) {
         }
     }
 }
+

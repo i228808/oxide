@@ -7,7 +7,7 @@ Oxide wraps Axum's router behind a simplified, chainable API. You can register r
 The `Method` enum covers all standard HTTP methods:
 
 ```rust
-use oxide_core::Method;
+use oxide_framework_core::Method;
 
 // Available variants:
 // Method::GET
@@ -24,7 +24,7 @@ use oxide_core::Method;
 ### Generic `.route()` Method
 
 ```rust
-use oxide_core::{App, Method};
+use oxide_framework_core::{App, Method};
 
 App::new()
     .route(Method::GET, "/", index)
@@ -53,7 +53,7 @@ These are available on both `App` and `OxideRouter`.
 Use `{param}` syntax in the path and extract with `Path`:
 
 ```rust
-use oxide_core::{ApiResponse, Path};
+use oxide_framework_core::{ApiResponse, Path};
 
 async fn get_user(Path(id): Path<u64>) -> ApiResponse<User> {
     ApiResponse::ok(User { id, name: format!("User#{id}") })
@@ -80,7 +80,7 @@ app.get("/posts/{post_id}/comments/{comment_id}", get_comment)
 For larger applications, define route groups as standalone functions that return an `OxideRouter`:
 
 ```rust
-use oxide_core::OxideRouter;
+use oxide_framework_core::OxideRouter;
 
 fn user_routes() -> OxideRouter {
     OxideRouter::new()
@@ -188,3 +188,4 @@ Handlers can also return plain types like `&'static str`, `String`, or `axum::re
 | `.nest(prefix, router)` | Yes | Yes | Mount sub-router under prefix |
 | `.routes(router)` | Yes | — | Flat merge (App only) |
 | `.merge(router)` | — | Yes | Flat merge (OxideRouter only) |
+

@@ -11,3 +11,4 @@ pub fn encode_token(claims: &AuthClaims, secret: &[u8]) -> Result<String, jsonwe
     header.typ = Some("JWT".into());
     jsonwebtoken::encode(&header, claims, &key)
 }
+

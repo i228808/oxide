@@ -1,7 +1,7 @@
 pub use sqlx;
 pub use sqlx::{Database, Sqlite, Postgres, MySql};
 
-use oxide_core::App;
+use oxide_framework_core::App;
 
 /// A type alias for injecting Database pools via the DI system.
 pub type DbPool<D> = sqlx::Pool<D>;
@@ -36,3 +36,4 @@ impl AppDbExt for App {
         self.state(pool)
     }
 }
+

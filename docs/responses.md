@@ -31,7 +31,7 @@ The `error` field is always a string message.
 Import it and use it as your handler return type:
 
 ```rust
-use oxide_core::ApiResponse;
+use oxide_framework_core::ApiResponse;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -72,7 +72,7 @@ ApiResponse::ok(user)
 ApiResponse::created(new_user)
 
 // Custom success status
-use oxide_core::StatusCode;
+use oxide_framework_core::StatusCode;
 ApiResponse::success(StatusCode::ACCEPTED, job)
 ```
 
@@ -96,7 +96,7 @@ ApiResponse::not_found("user not found")
 ApiResponse::internal_error("something went wrong")
 
 // Custom error status
-use oxide_core::StatusCode;
+use oxide_framework_core::StatusCode;
 ApiResponse::error(StatusCode::CONFLICT, "username already taken")
 ```
 
@@ -130,7 +130,7 @@ For `id = 0`:
 Use the re-exported `Json` extractor to parse incoming JSON:
 
 ```rust
-use oxide_core::Json;
+use oxide_framework_core::Json;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -189,3 +189,4 @@ pub struct ErrorBody {
 ```
 
 Both are serialized to JSON automatically by the `IntoResponse` implementation on `ApiResponse<T>`.
+

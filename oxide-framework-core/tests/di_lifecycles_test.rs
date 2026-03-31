@@ -1,4 +1,4 @@
-use oxide_core::{App, ApiResponse, Data};
+use oxide_framework_core::{App, ApiResponse, Data};
 use reqwest::StatusCode;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -16,7 +16,7 @@ async fn handler(
     Data(global): Data<Arc<GlobalCounter>>,
     // Proposed extractor for request-scoped dependencies
     // Scoped<T> fails to extract if T was not injected into this specific request
-    oxide_core::Scoped(req_id): oxide_core::Scoped<RequestId>,
+    oxide_framework_core::Scoped(req_id): oxide_framework_core::Scoped<RequestId>,
 ) -> ApiResponse<String> {
     let current_global = global.0.fetch_add(1, Ordering::SeqCst);
     ApiResponse::ok(format!("global: {}, request: {}", current_global, req_id.0))
@@ -61,7 +61,7 @@ async fn test_missing_scoped_dependency_fails_gracefully() {
     // If a handler demands `Scoped<T>` but it was never provided,
     // the framework should return a 500 cleanly, not panic and crash the server.
 
-    async fn bad_handler(_missing: oxide_core::Scoped<String>) -> ApiResponse<()> {
+    async fn bad_handler(_missing: oxide_framework_core::Scoped<String>) -> ApiResponse<()> {
         ApiResponse::ok(())
     }
 
@@ -76,3 +76,4 @@ async fn test_missing_scoped_dependency_fails_gracefully() {
     // Framework should catch the missing extraction and return 500
     assert_eq!(res.status(), StatusCode::INTERNAL_SERVER_ERROR);
 }
+

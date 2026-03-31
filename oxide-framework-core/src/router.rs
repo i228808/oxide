@@ -140,3 +140,4 @@ impl<S: Clone + Send + Sync + 'static> OxideRouter<S> {
         self.inner
     }
 }
+

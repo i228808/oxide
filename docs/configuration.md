@@ -86,7 +86,7 @@ port: 8080
 You can load config outside of the `App` builder if needed:
 
 ```rust
-use oxide_core::AppConfig;
+use oxide_framework_core::AppConfig;
 
 let config = AppConfig::load(Some("app.yaml"));
 println!("Binding to {}:{}", config.host, config.port);
@@ -120,7 +120,8 @@ RUST_LOG=debug cargo run
 RUST_LOG=warn cargo run
 
 # Fine-grained control
-RUST_LOG=oxide_core=debug,hyper=warn cargo run
+RUST_LOG=oxide_framework_core=debug,hyper=warn cargo run
 ```
 
 The default level is `info`.
+

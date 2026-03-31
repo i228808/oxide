@@ -7,7 +7,7 @@ Oxide is a thin abstraction over Axum. These benchmarks quantify the exact cost 
 ### Criterion (micro-benchmarks)
 
 ```bash
-cargo bench -p oxide_core --bench overhead
+cargo bench -p oxide_framework_core --bench overhead
 ```
 
 Measures per-request latency with statistical rigor (100-500 samples per benchmark). Results in `target/criterion/`.
@@ -15,14 +15,14 @@ Measures per-request latency with statistical rigor (100-500 samples per benchma
 ### Load Test (sustained throughput)
 
 ```bash
-cargo run -p oxide_core --release --example loadtest
+cargo run -p oxide_framework_core --release --example loadtest
 ```
 
 Configurable via environment variables:
 
 ```bash
 # 30 seconds, 100 concurrent connections
-DURATION=30 CONCURRENCY=100 cargo run -p oxide_core --release --example loadtest
+DURATION=30 CONCURRENCY=100 cargo run -p oxide_framework_core --release --example loadtest
 ```
 
 ### External Tools (wrk / k6)
@@ -31,10 +31,10 @@ Start the comparison servers:
 
 ```bash
 # Terminal 1 — bare Axum on port 3001
-cargo run -p oxide_core --release --example bench_raw_axum
+cargo run -p oxide_framework_core --release --example bench_raw_axum
 
 # Terminal 2 — Oxide (full middleware) on port 3002
-cargo run -p oxide_core --release --example bench_oxide
+cargo run -p oxide_framework_core --release --example bench_oxide
 ```
 
 Then benchmark with wrk:
@@ -146,3 +146,4 @@ All endpoints return the same JSON shape to ensure a fair comparison:
 1. **Rate limiter** is the most expensive middleware (~5-10 µs). If you're behind a reverse proxy with its own rate limiting, disable it for better throughput.
 2. **Request logging** (disabled in benchmarks) adds ~2-5 µs per request for tracing. Leave it on in production — the observability is worth it.
 3. **Build with `--release`** — debug builds are 10-50x slower due to lack of optimizations.
+

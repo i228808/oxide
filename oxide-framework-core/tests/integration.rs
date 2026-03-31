@@ -1,4 +1,4 @@
-use oxide_core::{App, ApiResponse, Config, Data, Json, OxideRouter, Path};
+use oxide_framework_core::{App, ApiResponse, Config, Data, Json, OxideRouter, Path};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -891,7 +891,7 @@ async fn test_env_overrides_config() {
         std::env::set_var("OXIDE_APP_NAME", "test-app");
     }
 
-    let config = oxide_core::AppConfig::load(None);
+    let config = oxide_framework_core::AppConfig::load(None);
 
     assert_eq!(config.port, 9999);
     assert_eq!(config.app_name, "test-app");
@@ -1388,3 +1388,4 @@ async fn test_concurrent_panics_and_normal_requests() {
     assert_eq!(crash_500, 50, "all panic requests should return 500");
     assert_eq!(ok_200, 50, "all normal requests should return 200");
 }
+

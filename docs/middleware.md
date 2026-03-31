@@ -25,9 +25,9 @@ Request
 Logs every request with method, path, status, and latency. Enabled by default.
 
 ```
-INFO oxide_core::middleware: request completed method=GET path=/ status=200 latency_ms=0
-INFO oxide_core::middleware: request completed method=POST path=/api/users status=201 latency_ms=1
-INFO oxide_core::middleware: request completed method=GET path=/api/users/0 status=404 latency_ms=0
+INFO oxide_framework_core::middleware: request completed method=GET path=/ status=200 latency_ms=0
+INFO oxide_framework_core::middleware: request completed method=POST path=/api/users status=201 latency_ms=1
+INFO oxide_framework_core::middleware: request completed method=GET path=/api/users/0 status=404 latency_ms=0
 ```
 
 Disable it:
@@ -59,7 +59,7 @@ HTTP/1.1 429 Too Many Requests
 Server log:
 
 ```
-WARN oxide_core::rate_limit: rate limit exceeded client_ip=192.168.1.1
+WARN oxide_framework_core::rate_limit: rate limit exceeded client_ip=192.168.1.1
 ```
 
 ### IP Detection
@@ -125,8 +125,8 @@ HTTP/1.1 408 Request Timeout
 Server log:
 
 ```
-WARN oxide_core::middleware: request timed out path=/slow timeout_ms=30000
-INFO oxide_core::middleware: request completed method=GET path=/slow status=408 latency_ms=30001
+WARN oxide_framework_core::middleware: request timed out path=/slow timeout_ms=30000
+INFO oxide_framework_core::middleware: request completed method=GET path=/slow status=408 latency_ms=30001
 ```
 
 ## Graceful Shutdown
@@ -139,8 +139,8 @@ INFO oxide_core::middleware: request completed method=GET path=/slow status=408 
 The server stops accepting new connections, finishes processing in-flight requests, and shuts down cleanly:
 
 ```
-INFO oxide_core::app: received Ctrl+C, shutting down…
-INFO oxide_core::app: Oxide server shut down gracefully
+INFO oxide_framework_core::app: received Ctrl+C, shutting down…
+INFO oxide_framework_core::app: Oxide server shut down gracefully
 ```
 
 No configuration needed — it's always on.
@@ -279,3 +279,4 @@ impl SecureController {
 | After Hook | `.after(fn)` | — | — |
 | Custom Layer | `.layer(tower_layer)` | — | — |
 | Controller Middleware | `fn middleware(Router) -> Router` | — | — |
+
