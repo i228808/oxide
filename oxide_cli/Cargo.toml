@@ -6,6 +6,7 @@ description = "CLI for the Oxide web framework — scaffold, generate, run, test
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
+readme.workspace = true
 
 [[bin]]
 name = "oxide"

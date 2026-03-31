@@ -6,6 +6,7 @@ description = "Zero-config SQLx wrapper and database integration for the Oxide w
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
+readme.workspace = true
 
 [dependencies]
 oxide_core = { version = "0.1.0", path = "../oxide_core" }
