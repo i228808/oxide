@@ -4,6 +4,44 @@ A **Rust-native, opinionated web framework** that delivers a Spring Boot-like de
 
 Built on top of [Axum](https://github.com/tokio-rs/axum) and [Tokio](https://tokio.rs), Oxide provides convention-first project structure, a clean chainable API, and standardized patterns for routing, configuration, middleware, and shared state.
 
+## Why Not Just Use Axum?
+
+Axum is an incredible, high-performance routing library, but it is **not a full framework**. 
+
+When building production services with raw Axum, you repeatedly wire together the same boilerplate: configuring tracing subscribers, stacking Tower middleware correctly (CORS, timeouts, panic recovery, rate limiting), creating standardized JSON error envelopes, and managing dependency injection lifecycles.
+
+**Oxide removes that boilerplate and enforces correct conventions while keeping Axum-level performance.**
+
+### The Killer Feature: Zero-Config Production APIs
+
+Oxide ships with secure, production-tested defaults out of the box. You get automatic request logging, global panic recovery, standardized JSON success/error envelopes, and deterministic middleware ordering—all without writing a single line of configuration.
+
+### Axum vs. Oxide: The Boilerplate Difference
+
+**Raw Axum (30+ lines of exact middleware ordering & setup):**
+```rust
+// A typical production Axum setup
+let app = Router::new()
+    .route("/api/users", get(list_users))
+    // Middleware order is critical and easy to get wrong!
+    .layer(CatchPanicLayer::new()) 
+    .layer(CorsLayer::permissive())
+    .layer(TimeoutLayer::new(Duration::from_secs(30)))
+    .layer(TraceLayer::new_for_http()) 
+    .with_state(db_pool);
+
+let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+axum::serve(listener, app).await.unwrap();
+```
+
+**Oxide (5 lines, zero configuration for the same production readiness):**
+```rust
+// Everything above is handled automatically and correctly.
+App::new()
+    .controller::<UserController>()
+    .run();
+```
+
 ## Quickstart — Controller Style
 
 ```rust

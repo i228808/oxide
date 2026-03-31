@@ -17,7 +17,7 @@ pub use auth::{
     encode_token, AuthClaims, AuthConfig, AuthLayer, AuthRejection, Authenticated, OptionalAuth,
     RequireRole, RoleName,
 };
-pub use extract::{Config, Data, Inject};
+pub use extract::{Config, Data, Inject, Scoped};
 pub use response::ApiResponse;
 pub use router::{Method, OxideRouter};
 pub use state::AppState;

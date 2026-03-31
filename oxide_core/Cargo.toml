@@ -2,9 +2,14 @@
 name = "oxide_core"
 version.workspace = true
 edition.workspace = true
+description = "Core runtime and framework logic for the Oxide web framework."
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
 
 [dependencies]
-oxide_macros = { path = "../oxide_macros" }
+oxide_macros = { version = "0.1.0", path = "../oxide_macros" }
 axum = "0.8"
 tokio = { version = "1", features = ["full"] }
 tower = "0.5"

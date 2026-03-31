@@ -297,6 +297,34 @@ impl App {
         self
     }
 
+    /// Register a request-scoped dependency factory.
+    /// 
+    /// The factory closure is called on *every* incoming request, and its output
+    /// is automatically injected into the request extensions, making it available
+    /// to handlers via the `Scoped<T>` extractor.
+    pub fn scoped_state<F, Fut, T>(mut self, factory: F) -> Self
+    where
+        F: Fn(&axum::http::request::Parts) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = T> + Send + 'static,
+        T: Clone + Send + Sync + 'static,
+    {
+        let factory = Arc::new(factory);
+        self.user_layers.push(Box::new(move |router: Router| {
+            let f = factory.clone();
+            router.layer(axum::middleware::from_fn(move |req: Request, next: Next| {
+                let f = f.clone();
+                async move {
+                    let (mut parts, body) = req.into_parts();
+                    let val = f(&parts).await;
+                    parts.extensions.insert(val);
+                    let req = axum::extract::Request::from_parts(parts, body);
+                    next.run(req).await
+                }
+            }))
+        }));
+        self
+    }
+
     /// Register an "after" hook that can transform every outgoing response.
     ///
     /// ```rust,ignore
@@ -395,8 +423,14 @@ impl App {
 
     // -- Server lifecycle -----------------------------------------------------
 
-    /// Build and start the HTTP server. Blocks the current thread.
-    pub fn run(mut self) {
+    /// Build and start the HTTP server. Blocks the current thread, creating a new Tokio runtime.
+    pub fn run(self) {
+        let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
+        rt.block_on(self.serve());
+    }
+
+    /// Build and start the HTTP server using the current Tokio runtime.
+    pub async fn serve(mut self) {
         self.config = AppConfig::load(self.config_path.as_deref());
 
         let addr = format!("{}:{}", self.config.host, self.config.port);
@@ -409,29 +443,25 @@ impl App {
         let config = self.config.clone();
         let (router, _state) = self.build_router(config);
 
-        let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
-
-        rt.block_on(async move {
-            let listener = TcpListener::bind(&addr)
-                .await
-                .unwrap_or_else(|e| panic!("failed to bind to {addr}: {e}"));
-
-            info!(
-                name = %app_name,
-                address = %addr,
-                "Oxide server started"
-            );
-
-            axum::serve(
-                listener,
-                router.into_make_service_with_connect_info::<SocketAddr>(),
-            )
-            .with_graceful_shutdown(shutdown_signal())
+        let listener = TcpListener::bind(&addr)
             .await
-            .expect("server error");
+            .unwrap_or_else(|e| panic!("failed to bind to {addr}: {e}"));
 
-            info!("Oxide server shut down gracefully");
-        });
+        info!(
+            name = %app_name,
+            address = %addr,
+            "Oxide server started"
+        );
+
+        axum::serve(
+            listener,
+            router.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .expect("server error");
+
+        info!("Oxide server shut down gracefully");
     }
 
     // -- Testing --------------------------------------------------------------

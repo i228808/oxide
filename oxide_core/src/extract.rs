@@ -131,3 +131,38 @@ impl IntoResponse for StateNotFound {
             .into_response()
     }
 }
+
+/// Extractor for request-scoped dependencies.
+///
+/// If a dependency `T` was injected into the current request (e.g. via `App::scoped_state`),
+/// this extractor will retrieve it. Otherwise, it fails with a 500 Internal Server Error.
+pub struct Scoped<T>(pub T);
+
+impl<S, T> axum::extract::FromRequestParts<S> for Scoped<T>
+where
+    S: Send + Sync,
+    T: Clone + Send + Sync + 'static,
+{
+    type Rejection = axum::response::Response;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        parts
+            .extensions
+            .get::<T>()
+            .cloned()
+            .map(Scoped)
+            .ok_or_else(|| {
+                crate::ApiResponse::<()>::error(
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    format!(
+                        "Missing scoped dependency: {}",
+                        std::any::type_name::<T>()
+                    )
+                ).into_response()
+            })
+    }
+}
+

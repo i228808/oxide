@@ -177,3 +177,196 @@ Maintain the Month 1 philosophy:
 * **Test-first development** → write tests before macro/DI implementations
 * **Edge-focused validation** → every feature validated for concurrency, panic safety, and HTTP spec correctness
 * **Developer experience first** → ergonomics, minimal boilerplate, predictable API
+
+---
+
+# prompt.md
+
+## Purpose
+
+This document defines the **core philosophy, constraints, and goals** of the framework. Any AI agent or contributor must strictly adhere to this to avoid architectural drift.
+
+---
+
+## Core Goal
+
+Build a **Rust-native web framework** that delivers:
+
+* Near-zero overhead compared to Axum
+* Strong conventions with minimal boilerplate
+* Production-safe defaults out of the box
+* Deterministic behavior under concurrency and load
+
+This is **not** an experiment. This is a **production-oriented framework**.
+
+---
+
+## Non-Negotiable Principles
+
+### 1. Performance is a Constraint, Not a Feature
+
+* Overhead must remain within ~5–15% of raw Axum
+* No abstraction that introduces unpredictable latency
+* Every feature must justify its runtime cost
+
+If a feature degrades performance significantly → reject or redesign
+
+---
+
+### 2. Test-First Development (MANDATORY)
+
+Every feature must follow:
+
+1. Write integration test
+2. Write edge/abuse test
+3. Validate concurrency behavior
+4. Then implement
+
+No feature is complete without:
+
+* concurrency tests
+* failure tests
+* middleware interaction tests
+
+---
+
+### 3. Edge-Case Driven Design
+
+We do not design for the happy path.
+
+Every feature must be validated against:
+
+* high concurrency (100–1000 requests)
+* malformed input
+* middleware interaction
+* failure propagation
+* real HTTP semantics (CORS, timeouts, 429, etc.)
+
+---
+
+### 4. Deterministic Concurrency
+
+All behavior under concurrency must be:
+
+* predictable
+* repeatable
+* race-free
+
+If results vary under load → it is a bug
+
+---
+
+### 5. Middleware Correctness Over Simplicity
+
+Middleware must:
+
+* preserve execution order
+* handle both request and response phases
+* propagate errors correctly
+* never break HTTP guarantees (e.g., CORS headers on errors)
+
+Incorrect middleware composition is unacceptable
+
+---
+
+### 6. Developer Experience (DX) is Critical
+
+The framework must:
+
+* reduce boilerplate significantly vs Axum
+* provide clean, intuitive APIs
+* avoid exposing unnecessary generics or complexity
+
+Target:
+
+* working API in <20 lines
+
+---
+
+### 7. Convention Over Configuration
+
+Default behavior should:
+
+* work without setup
+* include logging, error handling, and middleware
+
+Configuration should be optional, not required
+
+---
+
+### 8. Compile-Time Safety Over Runtime Magic
+
+Rust has no reflection. We use:
+
+* procedural macros
+* type system
+
+Avoid:
+
+* runtime registration hacks
+* dynamic behavior that weakens safety
+
+---
+
+## Architectural Constraints
+
+* Must remain a **thin layer over Axum**
+* No tight coupling to internal Axum APIs
+* Components must remain modular (routing, middleware, config)
+* State must be thread-safe (Arc-based)
+
+---
+
+## What We Are NOT Building
+
+* Not a full enterprise clone of Spring Boot
+* Not an ORM
+* Not a monolithic system
+* Not a runtime-heavy framework
+
+We focus on:
+
+* web layer
+* developer ergonomics
+* correctness under load
+
+---
+
+## Acceptance Criteria for Any New Feature
+
+A feature is accepted ONLY if:
+
+* [ ] Has integration tests
+* [ ] Has concurrency tests
+* [ ] Has edge/failure tests
+* [ ] Does not break middleware ordering
+* [ ] Maintains performance budget
+* [ ] Improves developer experience measurably
+
+---
+
+## Red Flags (Reject Immediately)
+
+* Adds hidden runtime cost
+* Breaks determinism under concurrency
+* Introduces global mutable state
+* Requires users to understand internal framework details
+* Complicates the API without clear benefit
+
+---
+
+## Guiding Philosophy
+
+> Build the simplest possible abstraction that remains correct under extreme conditions.
+
+---
+
+## Summary
+
+This framework exists to prove:
+
+* You can have **Spring Boot–level ergonomics** in Rust
+* Without sacrificing **performance or safety**
+* While maintaining **predictable behavior under real-world load**
+
+Any deviation from this direction is incorrect.

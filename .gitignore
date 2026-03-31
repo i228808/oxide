@@ -15,7 +15,7 @@ Cargo.lock
 *.swp
 *.swo
 *~
-
+patientzero
 # OS
 Thumbs.db
 .DS_Store

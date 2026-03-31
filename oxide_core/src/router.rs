@@ -35,9 +35,14 @@ impl<S: Clone + Send + Sync + 'static> OxideRouter<S> {
     }
 
     /// Nest this router under a prefix, consuming and returning `self`.
+    /// Handles empty and "/" prefixes natively via merge (Axum 0.8 compatibility).
     pub fn nest_self(self, prefix: &str) -> Self {
-        Self {
-            inner: Router::new().nest(prefix, self.inner),
+        if prefix.is_empty() || prefix == "/" {
+            self
+        } else {
+            Self {
+                inner: Router::new().nest(prefix, self.inner),
+            }
         }
     }
 
@@ -110,7 +115,7 @@ impl<S: Clone + Send + Sync + 'static> OxideRouter<S> {
         self
     }
 
-    /// Nest a sub-router under the given prefix.
+    /// Nest a sub-router under the given prefix. Handles empty and "/" prefixes gracefully.
     ///
     /// ```rust,ignore
     /// let api = OxideRouter::new()
@@ -122,7 +127,11 @@ impl<S: Clone + Send + Sync + 'static> OxideRouter<S> {
     /// // produces: GET /api/users, POST /api/users
     /// ```
     pub fn nest(mut self, prefix: &str, other: OxideRouter<S>) -> Self {
-        self.inner = self.inner.nest(prefix, other.inner);
+        if prefix.is_empty() || prefix == "/" {
+            self.inner = self.inner.merge(other.inner);
+        } else {
+            self.inner = self.inner.nest(prefix, other.inner);
+        }
         self
     }
 
