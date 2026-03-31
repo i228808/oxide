@@ -1,5 +1,5 @@
 [package]
-name = "oxide_framework_macros"
+name = "oxide-framework-macros"
 version.workspace = true
 edition.workspace = true
 description = "Procedural macros for the Oxide web framework."
@@ -14,4 +14,5 @@ proc-macro = true
 syn = { version = "2", features = ["full", "extra-traits"] }
 quote = "1"
 proc-macro2 = "1"
+
 

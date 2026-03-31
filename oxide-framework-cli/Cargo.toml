@@ -1,5 +1,5 @@
 [package]
-name = "oxide_cli"
+name = "oxide-framework-cli"
 version.workspace = true
 edition.workspace = true
 description = "CLI for the Oxide web framework — scaffold, generate, run, test, bench"
@@ -15,4 +15,5 @@ path = "src/main.rs"
 [dependencies]
 clap = { version = "4", features = ["derive", "env"] }
 anyhow = "1"
+
 

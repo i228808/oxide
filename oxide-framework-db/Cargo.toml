@@ -1,5 +1,5 @@
 [package]
-name = "oxide_framework_db"
+name = "oxide-framework-db"
 version.workspace = true
 edition.workspace = true
 description = "Zero-config SQLx wrapper and database integration for the Oxide web framework."
@@ -9,16 +9,17 @@ homepage.workspace = true
 readme.workspace = true
 
 [dependencies]
-oxide_framework_core = { version = "0.1.0", path = "../oxide_framework_core" }
+oxide-framework-core = { version = "0.1.0", path = "../oxide-framework-core" }
 sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "sqlite", "postgres", "mysql", "macros", "json"] }
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
-oxide_framework_macros = { path = "../oxide_framework_macros" }
+oxide-framework-macros = { path = "../oxide-framework-macros" }
 reqwest = { version = "0.12", features = ["json"] }
 rand = "0.8"
 futures = "0.3"
 serde_json = "1.0"
+
 
