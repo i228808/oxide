@@ -21,4 +21,3 @@ pub fn run(cargo_args: &[String]) -> Result<()> {
     }
     Ok(())
 }
-
