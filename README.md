@@ -196,11 +196,14 @@ Oxide/
 - [Responses](docs/responses.md) — ApiResponse, JSON envelopes, error handling
 - [Configuration](docs/configuration.md) — YAML files, environment variables, defaults
 - [State Management](docs/state.md) — Shared state, Config/Data extractors, thread safety
+- [Database](docs/db.md) — SQLx pool injection with `oxide-framework-db`
 - [Middleware](docs/middleware.md) — Request logging, middleware architecture, custom middleware
 - [Authentication](docs/auth.md) — JWT, session cookies, role guards
 - [Controllers](docs/controllers.md) — `#[controller]` macro behavior and controller middleware
 - [Architecture](docs/architecture.md) — Crate layout, data flow, design principles
 - [CLI](docs/cli.md) — `oxide new`, `generate`, `run`, `test`, `bench`
+- [Versioning](docs/versioning.md) — SemVer policy and public API scope
+- [Upgrade Notes](docs/upgrade-notes.md) — Migration notes between releases
 - [Docs Drift Checklist](docs/docs-drift-checklist.md) — Keep docs aligned with code changes
 
 ## Dependencies

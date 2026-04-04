@@ -58,3 +58,13 @@ Optional sanity checks:
 cargo test --workspace
 cargo run -p oxide-framework-cli -- --help
 ```
+
+## CI Guardrails
+
+This repository includes CI checks in `.github/workflows/ci.yml` for:
+
+- `cargo check --workspace`
+- `cargo test --workspace`
+- `cargo clippy --workspace --all-targets -- -D warnings`
+- `cargo fmt --all -- --check`
+- docs link checking for `README.md` and `docs/**/*.md`
