@@ -1,10 +1,11 @@
-use axum::extract::FromRequestParts;
-use axum::http::StatusCode;
+use axum::extract::{FromRequest, FromRequestParts};
 use axum::http::request::Parts;
-use axum::response::{IntoResponse, Response};
+use serde::de::DeserializeOwned;
 use std::sync::Arc;
+use validator::Validate;
 
 use crate::config::AppConfig;
+use crate::error::FrameworkError;
 use crate::state::AppState;
 
 /// Extractor for the application configuration.
@@ -21,7 +22,7 @@ use crate::state::AppState;
 pub struct Config(pub Arc<AppConfig>);
 
 impl<S: Send + Sync> FromRequestParts<S> for Config {
-    type Rejection = StateNotFound;
+    type Rejection = FrameworkError;
 
     async fn from_request_parts(
         parts: &mut Parts,
@@ -31,7 +32,9 @@ impl<S: Send + Sync> FromRequestParts<S> for Config {
             .extensions
             .get::<AppState>()
             .map(|s| Config(s.config.clone()))
-            .ok_or(StateNotFound("AppConfig"))
+            .ok_or(FrameworkError::MissingState {
+                type_name: "AppConfig",
+            })
     }
 }
 
@@ -54,7 +57,7 @@ impl<S: Send + Sync> FromRequestParts<S> for Config {
 pub struct Data<T: Send + Sync + 'static>(pub Arc<T>);
 
 impl<S: Send + Sync, T: Send + Sync + 'static> FromRequestParts<S> for Data<T> {
-    type Rejection = StateNotFound;
+    type Rejection = FrameworkError;
 
     async fn from_request_parts(
         parts: &mut Parts,
@@ -63,12 +66,16 @@ impl<S: Send + Sync, T: Send + Sync + 'static> FromRequestParts<S> for Data<T> {
         let app_state = parts
             .extensions
             .get::<AppState>()
-            .ok_or(StateNotFound("AppState"))?;
+            .ok_or(FrameworkError::MissingState {
+                type_name: "AppState",
+            })?;
 
         app_state
             .get::<T>()
             .map(Data)
-            .ok_or(StateNotFound(std::any::type_name::<T>()))
+            .ok_or(FrameworkError::MissingState {
+                type_name: std::any::type_name::<T>(),
+            })
     }
 }
 
@@ -92,7 +99,7 @@ impl<S: Send + Sync, T: Send + Sync + 'static> FromRequestParts<S> for Data<T> {
 pub struct Inject<T: Send + Sync + 'static>(pub Arc<T>);
 
 impl<S: Send + Sync, T: Send + Sync + 'static> FromRequestParts<S> for Inject<T> {
-    type Rejection = StateNotFound;
+    type Rejection = FrameworkError;
 
     async fn from_request_parts(
         parts: &mut Parts,
@@ -101,34 +108,16 @@ impl<S: Send + Sync, T: Send + Sync + 'static> FromRequestParts<S> for Inject<T>
         let app_state = parts
             .extensions
             .get::<AppState>()
-            .ok_or(StateNotFound("AppState"))?;
+            .ok_or(FrameworkError::MissingState {
+                type_name: "AppState",
+            })?;
 
         app_state
             .get::<T>()
             .map(Inject)
-            .ok_or(StateNotFound(std::any::type_name::<T>()))
-    }
-}
-
-/// Rejection returned when requested state is missing.
-#[derive(Debug)]
-pub struct StateNotFound(pub &'static str);
-
-impl std::fmt::Display for StateNotFound {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "state not found: {}", self.0)
-    }
-}
-
-impl std::error::Error for StateNotFound {}
-
-impl IntoResponse for StateNotFound {
-    fn into_response(self) -> Response {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("internal error: missing state ({})", self.0),
-        )
-            .into_response()
+            .ok_or(FrameworkError::MissingState {
+                type_name: std::any::type_name::<T>(),
+            })
     }
 }
 
@@ -143,7 +132,7 @@ where
     S: Send + Sync,
     T: Clone + Send + Sync + 'static,
 {
-    type Rejection = axum::response::Response;
+    type Rejection = FrameworkError;
 
     async fn from_request_parts(
         parts: &mut axum::http::request::Parts,
@@ -154,15 +143,59 @@ where
             .get::<T>()
             .cloned()
             .map(Scoped)
-            .ok_or_else(|| {
-                crate::ApiResponse::<()>::error(
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!(
-                        "Missing scoped dependency: {}",
-                        std::any::type_name::<T>()
-                    )
-                ).into_response()
+            .ok_or_else(|| FrameworkError::MissingState {
+                type_name: std::any::type_name::<T>(),
             })
+    }
+}
+
+/// Correlation/request id value extracted from request extensions.
+#[derive(Clone, Debug)]
+pub struct RequestId(pub String);
+
+impl<S: Send + Sync> FromRequestParts<S> for RequestId {
+    type Rejection = FrameworkError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        parts
+            .extensions
+            .get::<RequestId>()
+            .cloned()
+            .ok_or(FrameworkError::MissingState {
+                type_name: "RequestId",
+            })
+    }
+}
+
+/// JSON body extractor with `validator` integration.
+///
+/// Parses the JSON body into `T` and runs `T::validate()`.
+pub struct Validated<T>(pub T);
+
+impl<S, T> FromRequest<S> for Validated<T>
+where
+    S: Send + Sync,
+    T: DeserializeOwned + Validate,
+{
+    type Rejection = FrameworkError;
+
+    async fn from_request(req: axum::extract::Request, state: &S) -> Result<Self, Self::Rejection> {
+        let axum::Json(value) = axum::Json::<T>::from_request(req, state)
+            .await
+            .map_err(|e| FrameworkError::BadRequest(format!("invalid json body: {e}")))?;
+
+        value.validate().map_err(|e| {
+            let details = serde_json::to_value(&e).ok();
+            FrameworkError::Validation {
+                message: "validation failed".to_string(),
+                fields: details,
+            }
+        })?;
+
+        Ok(Validated(value))
     }
 }
 

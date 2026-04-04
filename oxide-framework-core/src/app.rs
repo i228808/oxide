@@ -3,10 +3,12 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
+use async_trait::async_trait;
 use axum::extract::Request;
 use axum::handler::Handler;
+use axum::http::HeaderName;
 use axum::middleware::Next;
-use axum::response::Response;
+use axum::response::{IntoResponse, Response};
 use axum::Router;
 use tokio::net::TcpListener;
 use tower_http::catch_panic::CatchPanicLayer;
@@ -15,14 +17,32 @@ use tracing::info;
 
 use crate::config::AppConfig;
 use crate::controller::Controller;
+use crate::error::FrameworkError;
 use crate::logging;
 use crate::auth::{AuthConfig, AuthLayer};
-use crate::middleware::{self, InjectStateLayer, RequestTimeoutLayer};
+use crate::middleware::{self, InjectStateLayer, RequestIdConfig, RequestTimeoutLayer};
 use crate::rate_limit::RateLimitLayer;
 use crate::router::{Method, OxideRouter};
 use crate::state::{AppState, TypeMap};
 
 type RouterTransform = Box<dyn FnOnce(Router) -> Router>;
+
+#[derive(Clone, Copy)]
+pub struct HealthOptions {
+    pub enabled: bool,
+}
+
+impl Default for HealthOptions {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
+#[async_trait]
+pub trait ReadinessCheck: Send + Sync {
+    fn name(&self) -> &'static str;
+    async fn check(&self) -> Result<(), FrameworkError>;
+}
 
 /// Primary entry point for building an Oxide application.
 ///
@@ -68,6 +88,9 @@ pub struct App {
     user_layers: Vec<RouterTransform>,
     /// Optional JWT / session-cookie auth (runs after user hooks, before state injection).
     auth: Option<AuthConfig>,
+    request_id: RequestIdConfig,
+    health: HealthOptions,
+    readiness_checks: Vec<Arc<dyn ReadinessCheck>>,
 }
 
 impl App {
@@ -89,6 +112,12 @@ impl App {
             controller_factories: Vec::new(),
             user_layers: Vec::new(),
             auth: None,
+            request_id: RequestIdConfig {
+                header_name: HeaderName::from_static("x-request-id"),
+                include_response_header: true,
+            },
+            health: HealthOptions::default(),
+            readiness_checks: Vec::new(),
         }
     }
 
@@ -256,6 +285,35 @@ impl App {
         self
     }
 
+    /// Set request id header name used for correlation extraction/propagation.
+    pub fn request_id_header(mut self, header: &str) -> Self {
+        if let Ok(name) = header.parse::<HeaderName>() {
+            self.request_id.header_name = name;
+        }
+        self
+    }
+
+    /// Disable writing request id back to response headers.
+    pub fn disable_response_request_id_header(mut self) -> Self {
+        self.request_id.include_response_header = false;
+        self
+    }
+
+    /// Disable default `/health/live` and `/health/ready` routes.
+    pub fn disable_default_health_routes(mut self) -> Self {
+        self.health.enabled = false;
+        self
+    }
+
+    /// Register a readiness check for `/health/ready`.
+    pub fn readiness_check<C>(mut self, check: C) -> Self
+    where
+        C: ReadinessCheck + 'static,
+    {
+        self.readiness_checks.push(Arc::new(check));
+        self
+    }
+
     /// Enable JWT authentication from `Authorization: Bearer` and/or a session cookie.
     ///
     /// Inserts [`crate::auth::AuthClaims`] into request extensions when the token is valid.
@@ -376,6 +434,19 @@ impl App {
         }
         let mut router = base.into_inner();
 
+        if self.health.enabled {
+            let checks = self.readiness_checks.clone();
+            router = router
+                .route("/health/live", axum::routing::get(health_live))
+                .route(
+                    "/health/ready",
+                    axum::routing::get(move || {
+                        let checks = checks.clone();
+                        async move { health_ready(checks).await }
+                    }),
+                );
+        }
+
         // Layer application order: first applied = innermost = closest to the route handler.
         // Request flow (outer → inner): Logger → CORS → Timeout → RateLimit → CatchPanic →
         // InjectState → JwtAuth → UserHooks → Route handler
@@ -417,6 +488,12 @@ impl App {
         if self.request_logging {
             router = router.layer(axum::middleware::from_fn(middleware::request_logger));
         }
+
+        let request_id_cfg = self.request_id.clone();
+        router = router.layer(axum::middleware::from_fn(move |req, next| {
+            let cfg = request_id_cfg.clone();
+            async move { middleware::request_id_middleware(cfg, req, next).await }
+        }));
 
         (router, app_state)
     }
@@ -489,6 +566,40 @@ impl App {
         });
 
         TestServer { addr, handle }
+    }
+}
+
+async fn health_live() -> axum::response::Response {
+    crate::ApiResponse::ok(serde_json::json!({ "status": "live" })).into_response()
+}
+
+async fn health_ready(
+    checks: Vec<Arc<dyn ReadinessCheck>>,
+) -> axum::response::Response {
+    let mut failures = Vec::new();
+    for check in checks {
+        if let Err(err) = check.check().await {
+            failures.push(serde_json::json!({
+                "check": check.name(),
+                "error": err.to_string(),
+                "code": err.code(),
+            }));
+        }
+    }
+
+    if failures.is_empty() {
+        crate::ApiResponse::ok(serde_json::json!({ "status": "ready" })).into_response()
+    } else {
+        (
+            axum::http::StatusCode::SERVICE_UNAVAILABLE,
+            axum::Json(serde_json::json!({
+                "status": axum::http::StatusCode::SERVICE_UNAVAILABLE.as_u16(),
+                "error": "readiness check failed",
+                "code": "readiness_failed",
+                "failures": failures,
+            })),
+        )
+            .into_response()
     }
 }
 

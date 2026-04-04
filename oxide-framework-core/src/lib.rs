@@ -2,6 +2,7 @@ mod app;
 pub mod auth;
 mod config;
 mod controller;
+mod error;
 mod extract;
 mod logging;
 pub mod middleware;
@@ -10,14 +11,15 @@ mod response;
 mod router;
 mod state;
 
-pub use app::{App, TestServer};
+pub use app::{App, ReadinessCheck, TestServer};
 pub use config::AppConfig;
 pub use controller::Controller;
 pub use auth::{
     encode_token, AuthClaims, AuthConfig, AuthLayer, AuthRejection, Authenticated, OptionalAuth,
     RequireRole, RoleName,
 };
-pub use extract::{Config, Data, Inject, Scoped};
+pub use error::FrameworkError;
+pub use extract::{Config, Data, Inject, RequestId, Scoped, Validated};
 pub use response::ApiResponse;
 pub use router::{Method, OxideRouter};
 pub use state::AppState;

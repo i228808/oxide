@@ -1,4 +1,6 @@
 use axum::extract::Request;
+use axum::http::header::HeaderName;
+use axum::http::HeaderValue;
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
@@ -9,7 +11,9 @@ use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 use tower::{Layer, Service};
 use tracing::{info, warn};
+use uuid::Uuid;
 
+use crate::extract::RequestId;
 use crate::state::AppState;
 
 // ---------------------------------------------------------------------------
@@ -43,6 +47,10 @@ pub(crate) fn panic_json_response(
 pub async fn request_logger(request: Request, next: Next) -> Response {
     let method = request.method().clone();
     let path = request.uri().path().to_string();
+    let request_id = request
+        .extensions()
+        .get::<RequestId>()
+        .map(|id| id.0.clone());
     let start = Instant::now();
 
     let response = next.run(request).await;
@@ -53,10 +61,49 @@ pub async fn request_logger(request: Request, next: Next) -> Response {
     info!(
         method = %method,
         path = %path,
+        request_id = %request_id.unwrap_or_else(|| "-".to_string()),
         status = status,
         latency_ms = latency.as_millis() as u64,
         "request completed"
     );
+
+    response
+}
+
+// ---------------------------------------------------------------------------
+// Built-in: request id / correlation middleware
+// ---------------------------------------------------------------------------
+
+#[derive(Clone)]
+pub(crate) struct RequestIdConfig {
+    pub header_name: HeaderName,
+    pub include_response_header: bool,
+}
+
+pub(crate) async fn request_id_middleware(
+    config: RequestIdConfig,
+    mut request: Request,
+    next: Next,
+) -> Response {
+    let id = request
+        .headers()
+        .get(&config.header_name)
+        .and_then(|h| h.to_str().ok())
+        .map(str::trim)
+        .filter(|v| !v.is_empty())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| Uuid::new_v4().to_string());
+
+    request.extensions_mut().insert(RequestId(id.clone()));
+    let mut response = next.run(request).await;
+
+    if config.include_response_header {
+        if let Ok(header_value) = HeaderValue::from_str(&id) {
+            response
+                .headers_mut()
+                .insert(config.header_name, header_value);
+        }
+    }
 
     response
 }
