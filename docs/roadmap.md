@@ -19,10 +19,11 @@ This page tracks API maturity so users can judge adoption risk quickly.
 | Request-scoped extractor (`Scoped`) | Evolving | Supported and documented; ergonomics may improve over time |
 | Controllers (`#[controller]`) | Stable | Macro and trait behavior documented |
 | Auth (`App::auth`, auth extractors) | Stable | HS256 + bearer/cookie + role extraction |
-| SQL integration (`oxide-framework-db`) | Evolving | Uses `connect_lazy`; startup connectivity checks may evolve |
+| SQL integration (`oxide-framework-db`) | Evolving | Supports lazy and strict readiness-backed connect modes |
 | CLI `new/generate/run/test/bench` | Stable | Public command surface is documented |
 | CLI `migrate` | Planned | Reserved command; currently a stub |
-| MongoDB integration crate | Planned | Crate directory exists, no public docs/API contract yet |
+| Supabase integration (`oxide-framework-supabase`) | Evolving | PostgREST/RPC client + strict readiness mode |
+| MongoDB integration (`oxide-framework-mongodb`) | Evolving | Client/database injection + strict readiness ping |
 
 ## Near-Term Focus
 

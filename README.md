@@ -201,6 +201,8 @@ Oxide/
 - [Configuration](docs/configuration.md) — YAML files, environment variables, defaults
 - [State Management](docs/state.md) — Shared state, Config/Data extractors, thread safety
 - [Database](docs/db.md) — SQLx pool injection with `oxide-framework-db`
+- [Supabase](docs/supabase.md) — PostgREST/RPC integration and readiness checks
+- [MongoDB](docs/mongodb.md) — Mongo client injection and readiness checks
 - [Middleware](docs/middleware.md) — Request logging, middleware architecture, custom middleware
 - [Authentication](docs/auth.md) — JWT, session cookies, role guards
 - [Controllers](docs/controllers.md) — `#[controller]` macro behavior and controller middleware

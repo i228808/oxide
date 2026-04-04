@@ -1,5 +1,5 @@
 use oxide_framework_core::{App, ApiResponse, Data};
-use oxide_framework_db::{AppDbExt, Database, Sqlite};
+use oxide_framework_db::{AppDbExt, ConnectMode, Sqlite};
 use reqwest::StatusCode;
 use std::sync::Arc;
 use tokio::task::JoinSet;
@@ -13,6 +13,26 @@ async fn get_user(Data(db): Data<oxide_framework_db::DbPool<Sqlite>>) -> ApiResp
         .await
         .unwrap();
     ApiResponse::ok(result.0)
+}
+
+#[tokio::test]
+async fn test_database_strict_mode_still_works_with_sqlite() {
+    let server = App::new()
+        .database_with_mode::<Sqlite>(
+            "sqlite::memory:",
+            ConnectMode::Strict,
+            |opts: sqlx::pool::PoolOptions<Sqlite>| opts.max_connections(3),
+        )
+        .get("/db-test", get_user)
+        .into_test_server()
+        .await;
+
+    let client = reqwest::Client::new();
+    let res = client.get(server.url("/db-test")).send().await.unwrap();
+
+    assert_eq!(res.status(), StatusCode::OK);
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(body["data"], "Hello Oxide");
 }
 
 #[tokio::test]

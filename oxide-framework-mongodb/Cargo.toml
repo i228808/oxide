@@ -1,0 +1,16 @@
+[package]
+name = "oxide-framework-mongodb"
+version.workspace = true
+edition.workspace = true
+description = "MongoDB integration for the Oxide web framework."
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+
+[dependencies]
+oxide-framework-core = { version = "0.1.0", path = "../oxide-framework-core" }
+async-trait = "0.1"
+mongodb = "3"
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1", features = ["rt-multi-thread"] }

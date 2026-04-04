@@ -18,7 +18,9 @@ oxide_framework_db = { path = "../oxide-framework-db" }
 ## Core API
 
 - `AppDbExt::database::<D>(url, opts)`
+- `AppDbExt::database_with_mode::<D>(url, mode, opts)`
 - `DbPool<D>` type alias (`sqlx::Pool<D>`)
+- `ConnectMode::{Lazy, Strict}`
 - Re-exports: `sqlx`, `Sqlite`, `Postgres`, `MySql`, `Database`
 
 The extension method registers the pool through `App::state(...)`, so handlers
@@ -93,6 +95,18 @@ fn main() {
 - That means pool construction is synchronous during app build.
 - Connectivity is validated on first query, not necessarily at app startup.
 - Invalid URLs can still fail immediately while constructing the lazy pool.
+
+For fail-fast startup validation, use strict mode:
+
+```rust
+use oxide_framework_db::{AppDbExt, ConnectMode, Postgres};
+
+App::new().database_with_mode::<Postgres>(
+    "postgres://postgres:postgres@localhost:5432/app",
+    ConnectMode::Strict,
+    |opts| opts.max_connections(20),
+);
+```
 
 If you want hard fail-fast connectivity checks, issue a startup query before
 serving traffic.
