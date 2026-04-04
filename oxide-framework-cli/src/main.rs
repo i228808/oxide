@@ -27,8 +27,8 @@ enum Commands {
         /// Overwrite existing directory (use with care)
         #[arg(long)]
         force: bool,
-        /// `oxide_framework_core` dependency: `path=../oxide_framework_core` or `version=0.1`
-        #[arg(long, default_value = "path=../oxide_framework_core")]
+        /// `oxide_framework_core` dependency: `path=../oxide-framework-core` or `version=0.1`
+        #[arg(long, default_value = "path=../oxide-framework-core")]
         oxide: String,
     },
     /// Generate controllers, routes, or middleware stubs
@@ -122,4 +122,3 @@ fn main() -> Result<()> {
         Commands::Migrate { args } => migrate_cmd::run(&args),
     }
 }
-

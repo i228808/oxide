@@ -126,8 +126,8 @@ That gives you:
 Scaffold apps and generate controllers without boilerplate:
 
 ```bash
-cargo install --path oxide_cli   # installs `oxide` on PATH
-oxide new my-api --oxide path=../oxide_framework_core
+cargo install --path oxide-framework-cli   # installs `oxide` on PATH
+oxide new my-api --oxide path=../oxide-framework-core
 cd my-api && cargo run
 
 oxide generate controller Product --prefix /api/products
@@ -144,7 +144,7 @@ Oxide/
 ├── Cargo.toml                 # Workspace root
 ├── app.yaml                   # Application config
 │
-├── oxide_framework_core/                # Framework library
+├── oxide-framework-core/                # Framework library
 │   ├── src/
 │   │   ├── lib.rs             # Public API exports
 │   │   ├── app.rs             # App builder + server lifecycle
@@ -158,8 +158,9 @@ Oxide/
 │   └── examples/
 │       └── hello.rs           # Full working example
 │
-├── oxide_framework_macros/              # Proc-macro crate (#[controller], route attrs)
-└── oxide_cli/                 # `oxide` CLI — scaffold, generate, run, test, bench
+├── oxide-framework-macros/              # Proc-macro crate (#[controller], route attrs)
+├── oxide-framework-db/                  # SQLx integration crate
+└── oxide-framework-cli/                 # `oxide` CLI — scaffold, generate, run, test, bench
 ```
 
 ## Public API at a Glance
@@ -188,6 +189,8 @@ Oxide/
 
 ## Documentation
 
+- [API Reference](docs/api-reference.md) — Canonical public API map from `lib.rs`
+- [App Builder Reference](docs/app-builder-reference.md) — Full `App` methods and runtime behavior
 - [Getting Started](docs/getting-started.md) — Setup, first app, running the server
 - [Routing](docs/routing.md) — Methods, nesting, merging, path parameters
 - [Responses](docs/responses.md) — ApiResponse, JSON envelopes, error handling
@@ -195,8 +198,10 @@ Oxide/
 - [State Management](docs/state.md) — Shared state, Config/Data extractors, thread safety
 - [Middleware](docs/middleware.md) — Request logging, middleware architecture, custom middleware
 - [Authentication](docs/auth.md) — JWT, session cookies, role guards
+- [Controllers](docs/controllers.md) — `#[controller]` macro behavior and controller middleware
 - [Architecture](docs/architecture.md) — Crate layout, data flow, design principles
 - [CLI](docs/cli.md) — `oxide new`, `generate`, `run`, `test`, `bench`
+- [Docs Drift Checklist](docs/docs-drift-checklist.md) — Keep docs aligned with code changes
 
 ## Dependencies
 
@@ -213,7 +218,7 @@ Oxide/
 ## Running the Example
 
 ```bash
-cd oxide_framework_core
+cd oxide-framework-core
 cargo run --example hello
 ```
 

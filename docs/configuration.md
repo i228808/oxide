@@ -2,6 +2,9 @@
 
 Oxide uses a layered configuration system: YAML files provide the base, and environment variables override individual values.
 
+This page reflects current behavior in `oxide-framework-core/src/config.rs` and
+`oxide-framework-core/src/app.rs`.
+
 ## Config File (YAML)
 
 Create an `app.yaml` (or any `.yaml` file) in your project:
@@ -45,7 +48,7 @@ Environment variables take highest precedence. They use the `OXIDE_` prefix:
 Example:
 
 ```bash
-OXIDE_PORT=9000 cargo run --example hello
+OXIDE_PORT=9000 cargo run -p oxide-framework-core --example hello
 ```
 
 The server starts on port 9000 regardless of what `app.yaml` says.
@@ -100,10 +103,11 @@ let config = AppConfig::load(None);
 
 ## When Config is Loaded
 
-Config loading happens **inside `.run()`**, not at `.config()` call time. This means:
+Config loading happens at server start (`.run()` and `.serve().await`), not at
+`.config()` call time. This means:
 
 1. `.config("app.yaml")` only stores the path
-2. When `.run()` is called, it reads the file, parses it, applies env overrides
+2. When the server starts, it reads the file, parses it, applies env overrides
 3. The final config is used to bind the server
 
 This design lets you set up the config path early in the builder chain without worrying about file availability at that point.
@@ -124,4 +128,11 @@ RUST_LOG=oxide_framework_core=debug,hyper=warn cargo run
 ```
 
 The default level is `info`.
+
+## Failure Modes
+
+- Missing config file: falls back to defaults + env overrides.
+- Existing but unreadable file: startup panic with read error.
+- Existing but invalid YAML: startup panic with parse error.
+- Invalid `OXIDE_PORT`: ignored; current `port` value is kept.
 

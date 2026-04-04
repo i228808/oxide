@@ -68,13 +68,17 @@ The rate limiter identifies clients by IP address using these sources (in priori
 
 1. `X-Forwarded-For` header (first IP in comma-separated list)
 2. `X-Real-IP` header
-3. Falls back to `"unknown"` (all unidentified clients share one bucket)
+3. TCP peer address from `ConnectInfo<SocketAddr>`
+4. Falls back to `"unknown"`
 
 This works behind reverse proxies (Nginx, CloudFlare, etc.) as long as the proxy sets the forwarded headers.
 
 ### Memory Management
 
-Expired client windows are lazily cleaned up when the tracking map exceeds 1000 entries. For high-traffic production deployments behind a load balancer, consider an external rate limiter (Redis, etc.) applied at the proxy layer.
+Expired client windows are lazily cleaned up periodically (every 100 checks)
+or when the tracking map grows large (>10,000 entries). For high-traffic
+production deployments behind a load balancer, consider an external limiter
+(Redis/proxy-level) for cross-instance coordination.
 
 ## Built-in: CORS
 

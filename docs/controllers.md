@@ -2,6 +2,9 @@
 
 Controllers group related route handlers into a struct. The `#[controller]` macro generates all the boilerplate — you write methods, the framework wires them into the router.
 
+This page reflects the current macro behavior in `oxide-framework-macros/src/controller.rs`
+and runtime integration in `oxide-framework-core/src/app.rs`.
+
 ## Defining a Controller
 
 ```rust
@@ -61,11 +64,13 @@ The `#[controller("/prefix")]` macro generates an `impl Controller for YourStruc
 
 1. **`from_state`** — calls your `fn new(state: &AppState) -> Self` constructor. If no `new` method exists, falls back to `Default::default()`.
 2. **`register`** — wraps each `#[get]`/`#[post]`/`#[put]`/`#[delete]`/`#[patch]` method in a closure that captures `Arc<Self>`, then registers it on an `OxideRouter`.
-3. Routes are nested under the prefix (e.g. `/api/users`).
+3. **`configure_router`** — generated when your impl defines `fn middleware(router: axum::Router) -> axum::Router`.
+4. Routes are nested under the prefix (e.g. `/api/users`).
 
 At startup, `App::controller::<C>()` resolves the controller by:
 - Constructing it via `C::from_state(&app_state)` — panics immediately if a dependency is missing (fail-fast).
 - Wrapping it in `Arc<Self>` for shared ownership across request handlers.
+- Applying controller-scoped router configuration (`configure_router`) when present.
 - Merging the controller's routes into the main router.
 
 ## Constructor Injection
@@ -119,6 +124,13 @@ async fn update(&self, Path(id): Path<u64>, Json(body): Json<UpdateUser>) -> Api
 
 Static methods (without `&self`) are also supported — they're registered as plain function handlers.
 
+## `new` vs `Default`
+
+- If `new(state: &AppState)` exists, it is used.
+- Otherwise the macro emits `Self::default()`.
+
+If you omit `new`, your controller type must implement `Default`.
+
 ## Default Controllers (No Dependencies)
 
 If your controller has no dependencies, derive `Default` and skip the `new` method:
@@ -160,4 +172,18 @@ impl AdminController {
 ```
 
 The `middleware` method receives the controller's `Router` (already containing all routes) and returns it with additional layers applied. This middleware does NOT leak to other controllers.
+
+## Route Attributes Supported by the Macro
+
+The macro recognizes exactly these attributes:
+
+- `#[get("...")]`
+- `#[post("...")]`
+- `#[put("...")]`
+- `#[delete("...")]`
+- `#[patch("...")]`
+- `#[head("...")]`
+- `#[options("...")]`
+
+Other attributes are ignored for route registration.
 

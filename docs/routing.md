@@ -2,6 +2,11 @@
 
 Oxide wraps Axum's router behind a simplified, chainable API. You can register routes directly on `App` or build modular route groups with `OxideRouter`.
 
+This page reflects current behavior in:
+
+- `oxide-framework-core/src/router.rs`
+- `oxide-framework-core/src/app.rs`
+
 ## HTTP Methods
 
 The `Method` enum covers all standard HTTP methods:
@@ -47,6 +52,8 @@ App::new()
 ```
 
 These are available on both `App` and `OxideRouter`.
+
+`Method::HEAD` and `Method::OPTIONS` are supported via `.route(...)`.
 
 ## Path Parameters
 
@@ -96,6 +103,12 @@ fn product_routes() -> OxideRouter {
         .get("/{id}", get_product)
 }
 ```
+
+`OxideRouter` also supports:
+
+- `OxideRouter::from_router(axum_router)`
+- `.into_inner()` to get the underlying `axum::Router`
+- `.nest_self(prefix)` to prefix the current router itself
 
 ## Nesting (Prefix-Based)
 
@@ -154,7 +167,9 @@ App::new()
 
 ## Handler Signatures
 
-Handlers are async functions. Oxide uses Axum's handler system, so any function that implements `Handler<T, ()>` works. Common patterns:
+Handlers are async functions. Oxide uses Axum's handler system, so any function
+that satisfies Axum's `Handler` trait for the router state works. Common
+patterns:
 
 ```rust
 // No input, plain response
@@ -185,7 +200,10 @@ Handlers can also return plain types like `&'static str`, `String`, or `axum::re
 | `.put(path, handler)` | Yes | Yes | `PUT` shorthand |
 | `.delete(path, handler)` | Yes | Yes | `DELETE` shorthand |
 | `.patch(path, handler)` | Yes | Yes | `PATCH` shorthand |
+| `.route(Method::HEAD/OPTIONS, path, handler)` | Yes | Yes | Register `HEAD`/`OPTIONS` |
 | `.nest(prefix, router)` | Yes | Yes | Mount sub-router under prefix |
 | `.routes(router)` | Yes | — | Flat merge (App only) |
 | `.merge(router)` | — | Yes | Flat merge (OxideRouter only) |
+| `.from_router(router)` | — | Yes | Wrap an existing `axum::Router` |
+| `.into_inner()` | — | Yes | Unwrap to `axum::Router` |
 

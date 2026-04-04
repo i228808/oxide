@@ -2,6 +2,11 @@
 
 Oxide provides a thread-safe shared state system that makes configuration and custom data accessible in every handler — including nested routes.
 
+It supports two lifecycles:
+
+1. **Singleton app state** via `App::state(...)` + `Data<T>`/`Inject<T>`.
+2. **Request-scoped state** via `App::scoped_state(...)` + `Scoped<T>`.
+
 ## How It Works
 
 When `App::run()` is called, Oxide builds an `AppState` containing:
@@ -165,4 +170,43 @@ internal error: missing state (my_app::DbPool)
 ```
 
 This makes it easy to spot missing `.state()` calls during development.
+
+## Request-Scoped Dependencies (`Scoped<T>`)
+
+Use `App::scoped_state(...)` when you need values created per request (for
+example correlation ids, tenant context, or decoded upstream metadata).
+
+```rust
+use oxide_framework_core::{ApiResponse, App, Scoped};
+
+#[derive(Clone)]
+struct RequestId(String);
+
+async fn who(Scoped(id): Scoped<RequestId>) -> ApiResponse<String> {
+    ApiResponse::ok(id.0)
+}
+
+fn main() {
+    App::new()
+        .scoped_state(|parts| {
+            let raw = parts
+                .headers
+                .get("x-request-id")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("generated-id")
+                .to_string();
+            async move { RequestId(raw) }
+        })
+        .get("/who", who)
+        .run();
+}
+```
+
+Behavior:
+
+- The factory executes once per incoming request.
+- The produced value is stored in request extensions.
+- `Scoped<T>` clones and extracts that value in handlers.
+- If `Scoped<T>` is requested but missing, Oxide returns HTTP 500 with a JSON
+  error describing the missing type.
 

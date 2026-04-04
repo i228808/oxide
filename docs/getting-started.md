@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **Rust 1.75+** (edition 2024 workspace)
+- **Rust 1.85+** (edition 2024 workspace)
 - **Cargo** (comes with Rust)
 
 Verify your toolchain:
@@ -20,7 +20,7 @@ If you're building within the Oxide workspace, add it as a path dependency:
 
 ```toml
 [dependencies]
-oxide_framework_core = { path = "../oxide_framework_core" }
+oxide_framework_core = { path = "../oxide-framework-core" }
 serde = { version = "1", features = ["derive"] }
 ```
 
@@ -149,6 +149,8 @@ See [Responses](responses.md) for the full response API.
 
 ## Next Steps
 
+- [API Reference](api-reference.md) — Complete exported API map
+- [App Builder Reference](app-builder-reference.md) — All `App` builder/runtime methods
 - [Routing](routing.md) — Organize routes with nesting and modular routers
 - [Responses](responses.md) — Understand the standardized JSON envelope
 - [Configuration](configuration.md) — YAML, env vars, and precedence rules

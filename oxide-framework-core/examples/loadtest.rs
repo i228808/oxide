@@ -3,7 +3,7 @@
 //! Spins up a raw Axum server and an Oxide server, hammers both with
 //! concurrent requests, and prints a comparison table.
 //!
-//! Run:  `cargo run -p oxide_framework_core --release --example loadtest`
+//! Run:  `cargo run -p oxide-framework-core --release --example loadtest`
 //!
 //! Options via env vars:
 //!   DURATION=10    — test duration in seconds (default 10)

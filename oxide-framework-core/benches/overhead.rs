@@ -1,6 +1,6 @@
 //! Micro-benchmarks: raw Axum vs Oxide framework overhead.
 //!
-//! Run:  `cargo bench -p oxide_framework_core`
+//! Run:  `cargo bench -p oxide-framework-core`
 //!
 //! Each benchmark starts real HTTP servers on random ports and measures
 //! round-trip latency through reqwest.  This captures the true cost of

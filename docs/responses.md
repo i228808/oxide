@@ -2,6 +2,8 @@
 
 Oxide provides `ApiResponse<T>` — a standardized response type that wraps all handler output in a consistent JSON envelope.
 
+This page reflects current behavior in `oxide-framework-core/src/response.rs`.
+
 ## JSON Envelope Format
 
 ### Success
@@ -81,6 +83,8 @@ ApiResponse::success(StatusCode::ACCEPTED, job)
 | Method | HTTP Status | Usage |
 |---|---|---|
 | `ApiResponse::bad_request(msg)` | 400 | Validation failures |
+| `ApiResponse::unauthorized(msg)` | 401 | Missing/invalid authentication |
+| `ApiResponse::forbidden(msg)` | 403 | Authenticated but not allowed |
 | `ApiResponse::not_found(msg)` | 404 | Resource doesn't exist |
 | `ApiResponse::internal_error(msg)` | 500 | Unexpected server errors |
 | `ApiResponse::error(status, msg)` | Custom | Any error status code |
@@ -91,6 +95,12 @@ ApiResponse::bad_request("name is required")
 
 // 404 Not Found
 ApiResponse::not_found("user not found")
+
+// 401 Unauthorized
+ApiResponse::unauthorized("login required")
+
+// 403 Forbidden
+ApiResponse::forbidden("insufficient permissions")
 
 // 500 Internal Server Error
 ApiResponse::internal_error("something went wrong")
@@ -188,5 +198,12 @@ pub struct ErrorBody {
 }
 ```
 
-Both are serialized to JSON automatically by the `IntoResponse` implementation on `ApiResponse<T>`.
+Both are serialized to JSON automatically by the `IntoResponse` implementation
+on `ApiResponse<T>`.
+
+## Notes
+
+- `ApiResponse<T>` requires `T: serde::Serialize`.
+- The `status` value in the JSON body mirrors the HTTP status code.
+- You can still return any Axum `IntoResponse` type directly when needed.
 

@@ -3,19 +3,19 @@
 Install the `oxide` binary from the workspace:
 
 ```bash
-cargo install --path oxide_cli
+cargo install --path oxide-framework-cli
 ```
 
 Or run without installing (from the Oxide repo root):
 
 ```bash
-cargo run -p oxide_cli -- <subcommand>
+cargo run -p oxide-framework-cli -- <subcommand>
 ```
 
-From a **scaffolded app** that is its own workspace (e.g. after `oxide new`), the `oxide_cli` package is not a workspace member. Use an installed `oxide`, or:
+From a **scaffolded app** that is its own workspace (e.g. after `oxide new`), the `oxide-framework-cli` package is not a workspace member. Use an installed `oxide`, or:
 
 ```bash
-cargo run --manifest-path /path/to/Oxide/oxide_cli/Cargo.toml -- generate controller User
+cargo run --manifest-path /path/to/Oxide/oxide-framework-cli/Cargo.toml -- generate controller User
 ```
 
 ## Commands
@@ -26,7 +26,7 @@ Creates `<name>/` with a minimal binary crate: `Cargo.toml` (standalone `[worksp
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--oxide` | `path=../oxide_framework_core` | Dependency line: `path=../oxide_framework_core` or `version=0.1.0` |
+| `--oxide` | `path=../oxide-framework-core` | Dependency line: `path=../oxide-framework-core` or `version=0.1.0` |
 | `--force` | off | Remove existing directory before creating (destructive) |
 
 If `<name>` exists and is **empty**, it is removed and recreated without `--force`.
@@ -72,12 +72,12 @@ Environment variables (`PORT`, `RUST_LOG`, etc.) are inherited by the child proc
 
 ### `oxide test`
 
-- **Inside the Oxide repository** (if `oxide_framework_core/Cargo.toml` exists): `cargo test --workspace`.
+- **Inside the Oxide repository** (if `oxide-framework-core/Cargo.toml` exists): `cargo test --workspace`.
 - **Elsewhere:** `cargo test` for the local crate.
 
 ### `oxide bench`
 
-- **Inside the Oxide repository** (if `oxide_framework_core/benches/overhead.rs` exists): runs `cargo bench -p oxide_framework_core --bench overhead`, then `cargo run -p oxide_framework_core --release --example loadtest`.
+- **Inside the Oxide repository** (if `oxide-framework-core/benches/overhead.rs` exists): runs `cargo bench -p oxide-framework-core --bench overhead`, then `cargo run -p oxide-framework-core --release --example loadtest`.
 - **Elsewhere:** `cargo bench` for the local crate.
 
 ### `oxide migrate`

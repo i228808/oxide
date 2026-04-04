@@ -2,12 +2,19 @@
 
 Oxide is a thin abstraction over Axum. These benchmarks quantify the exact cost of the framework's middleware stack (state injection, panic recovery, rate limiting, CORS, request timeout) compared to bare Axum.
 
+This page reflects benchmark code in:
+
+- `oxide-framework-core/benches/overhead.rs`
+- `oxide-framework-core/examples/loadtest.rs`
+- `oxide-framework-core/examples/bench_raw_axum.rs`
+- `oxide-framework-core/examples/bench_oxide.rs`
+
 ## Running Benchmarks
 
 ### Criterion (micro-benchmarks)
 
 ```bash
-cargo bench -p oxide_framework_core --bench overhead
+cargo bench -p oxide-framework-core --bench overhead
 ```
 
 Measures per-request latency with statistical rigor (100-500 samples per benchmark). Results in `target/criterion/`.
@@ -15,14 +22,14 @@ Measures per-request latency with statistical rigor (100-500 samples per benchma
 ### Load Test (sustained throughput)
 
 ```bash
-cargo run -p oxide_framework_core --release --example loadtest
+cargo run -p oxide-framework-core --release --example loadtest
 ```
 
 Configurable via environment variables:
 
 ```bash
 # 30 seconds, 100 concurrent connections
-DURATION=30 CONCURRENCY=100 cargo run -p oxide_framework_core --release --example loadtest
+DURATION=30 CONCURRENCY=100 cargo run -p oxide-framework-core --release --example loadtest
 ```
 
 ### External Tools (wrk / k6)
@@ -31,10 +38,10 @@ Start the comparison servers:
 
 ```bash
 # Terminal 1 — bare Axum on port 3001
-cargo run -p oxide_framework_core --release --example bench_raw_axum
+cargo run -p oxide-framework-core --release --example bench_raw_axum
 
 # Terminal 2 — Oxide (full middleware) on port 3002
-cargo run -p oxide_framework_core --release --example bench_oxide
+cargo run -p oxide-framework-core --release --example bench_oxide
 ```
 
 Then benchmark with wrk:
@@ -63,9 +70,10 @@ export default function () {
 k6 run --vus 100 --duration 30s script.js
 ```
 
-## Baseline Results
+## Baseline Results (Example)
 
-Machine: Windows 10, AMD Ryzen / Intel i7 (results vary by hardware).
+Machine: Windows 10, AMD Ryzen / Intel i7 (results vary by hardware, Rust
+version, and benchmark sample sizes).
 
 ### Criterion — Per-Request Latency (single request, no concurrency)
 
@@ -108,7 +116,9 @@ These are the pure routing + serialization cost with no network overhead. Useful
 | Oxide (full middleware) | 206K | ~41K | 0.30ms | 0.27ms | 0.50ms | 0.89ms | 0 |
 | Oxide (controller + full) | 199K | ~40K | 0.31ms | 0.28ms | 0.53ms | 1.02ms | 0 |
 
-**Key takeaway**: Oxide with the full middleware stack sustains **~40K req/s** at 50 concurrency — within **5% of raw Axum throughput**. Zero errors under load.
+**Key takeaway (from this sample run)**: Oxide with the full middleware stack
+can sustain roughly **~40K req/s** at 50 concurrency and may land within a small
+single-digit percentage of raw Axum throughput on similar hardware.
 
 ## What the Benchmarks Test
 
@@ -138,7 +148,7 @@ All endpoints return the same JSON shape to ensure a fair comparison:
 
 - **< 5% overhead** at sustained throughput → the abstraction is essentially free under real workloads
 - **~15-20% overhead** per-request in micro-benchmarks → expected for 5 middleware layers; most of this is the rate limiter's HashMap lock
-- **Zero errors** under all load levels → framework is production-stable
+- **Zero errors** in these sampled runs → indicates healthy behavior for this benchmark setup
 - **Controllers add ~3-5%** on top of functional handlers → the `Arc<Self>` clone per request is near-zero cost
 
 ## Tips for Production
@@ -146,4 +156,15 @@ All endpoints return the same JSON shape to ensure a fair comparison:
 1. **Rate limiter** is the most expensive middleware (~5-10 µs). If you're behind a reverse proxy with its own rate limiting, disable it for better throughput.
 2. **Request logging** (disabled in benchmarks) adds ~2-5 µs per request for tracing. Leave it on in production — the observability is worth it.
 3. **Build with `--release`** — debug builds are 10-50x slower due to lack of optimizations.
+
+## Reproducibility Notes
+
+To compare results over time, record:
+
+- Rust toolchain version (`rustc --version`)
+- CPU model + core/thread count
+- OS + power mode
+- benchmark command and duration/concurrency settings
+
+Treat percent deltas as directional unless runs are repeated and averaged.
 

@@ -5,7 +5,7 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 
 pub fn run_bench(cargo_args: &[String]) -> Result<()> {
-    let in_oxide_repo = Path::new("oxide_framework_core/benches/overhead.rs").exists();
+    let in_oxide_repo = Path::new("oxide-framework-core/benches/overhead.rs").exists();
 
     if in_oxide_repo {
         // Criterion
@@ -13,7 +13,7 @@ pub fn run_bench(cargo_args: &[String]) -> Result<()> {
         criterion
             .arg("bench")
             .arg("-p")
-            .arg("oxide_framework_core")
+            .arg("oxide-framework-core")
             .arg("--bench")
             .arg("overhead");
         if !cargo_args.is_empty() {
@@ -36,7 +36,7 @@ pub fn run_bench(cargo_args: &[String]) -> Result<()> {
         let mut load = Command::new("cargo");
         load.arg("run")
             .arg("-p")
-            .arg("oxide_framework_core")
+            .arg("oxide-framework-core")
             .arg("--release")
             .arg("--example")
             .arg("loadtest");
@@ -60,10 +60,11 @@ pub fn run_bench(cargo_args: &[String]) -> Result<()> {
     cmd.stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
-    let status = cmd.status().with_context(|| "failed to run `cargo bench`")?;
+    let status = cmd
+        .status()
+        .with_context(|| "failed to run `cargo bench`")?;
     if !status.success() {
         std::process::exit(status.code().unwrap_or(1));
     }
     Ok(())
 }
-

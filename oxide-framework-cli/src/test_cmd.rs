@@ -5,7 +5,7 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 
 pub fn run_tests(cargo_args: &[String]) -> Result<()> {
-    let in_oxide_repo = Path::new("oxide_framework_core/Cargo.toml").exists();
+    let in_oxide_repo = Path::new("oxide-framework-core/Cargo.toml").exists();
 
     let mut cmd = Command::new("cargo");
     if in_oxide_repo {
@@ -28,4 +28,3 @@ pub fn run_tests(cargo_args: &[String]) -> Result<()> {
     }
     Ok(())
 }
-

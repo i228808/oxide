@@ -1,6 +1,6 @@
 //! `oxide new` — scaffold a new application crate.
 
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -16,7 +16,8 @@ pub fn run(name: &str, force: bool, oxide: &str) -> Result<()> {
                 .next()
                 .is_none();
             if is_empty {
-                fs::remove_dir(&root).with_context(|| format!("remove empty {}", root.display()))?;
+                fs::remove_dir(&root)
+                    .with_context(|| format!("remove empty {}", root.display()))?;
             } else {
                 bail!(
                     "destination `{}` already exists — use `--force` to overwrite (dangerous)",
@@ -31,11 +32,7 @@ pub fn run(name: &str, force: bool, oxide: &str) -> Result<()> {
     fs::create_dir_all(root.join("src/controllers"))
         .with_context(|| format!("create {}", root.join("src/controllers").display()))?;
 
-    write(
-        &root.join("Cargo.toml"),
-        &cargo_toml(name, &dep),
-        force,
-    )?;
+    write(&root.join("Cargo.toml"), &cargo_toml(name, &dep), force)?;
     write(&root.join("app.yaml"), APP_YAML, force)?;
     write(&root.join(".gitignore"), GITIGNORE, force)?;
     write(&root.join("README.md"), &readme(name, oxide), force)?;
@@ -56,11 +53,7 @@ pub fn run(name: &str, force: bool, oxide: &str) -> Result<()> {
 }
 
 fn validate_name(name: &str) -> Result<()> {
-    if name.is_empty()
-        || name.contains(['/', '\\'])
-        || name == "."
-        || name == ".."
-    {
+    if name.is_empty() || name.contains(['/', '\\']) || name == "." || name == ".." {
         bail!("invalid project name `{name}`");
     }
     if !name
@@ -88,7 +81,7 @@ fn parse_oxide_dep(oxide: &str) -> Result<String> {
         }
         return Ok(format!("oxide_framework_core = \"{v}\""));
     }
-    bail!("--oxide must be `path=../oxide_framework_core` or `version=0.1.0`");
+    bail!("--oxide must be `path=../oxide-framework-core` or `version=0.1.0`");
 }
 
 fn cargo_toml(crate_name: &str, oxide_dep: &str) -> String {
@@ -210,4 +203,3 @@ impl HelloController {
     // oxide-framework-cli:routes
 }
 "#;
-
