@@ -191,6 +191,7 @@ Oxide/
 
 - [API Reference](docs/api-reference.md) — Canonical public API map from `lib.rs`
 - [App Builder Reference](docs/app-builder-reference.md) — Full `App` methods and runtime behavior
+- [CLI Reference](docs/cli-reference.md) — Canonical command reference from CLI source
 - [Getting Started](docs/getting-started.md) — Setup, first app, running the server
 - [Routing](docs/routing.md) — Methods, nesting, merging, path parameters
 - [Responses](docs/responses.md) — ApiResponse, JSON envelopes, error handling
@@ -204,7 +205,16 @@ Oxide/
 - [CLI](docs/cli.md) — `oxide new`, `generate`, `run`, `test`, `bench`
 - [Versioning](docs/versioning.md) — SemVer policy and public API scope
 - [Upgrade Notes](docs/upgrade-notes.md) — Migration notes between releases
+- [Roadmap and Status](docs/roadmap.md) — Stable vs evolving vs planned areas
+- [Troubleshooting](docs/troubleshooting.md) — Common 401/403/500 and setup fixes
 - [Docs Drift Checklist](docs/docs-drift-checklist.md) — Keep docs aligned with code changes
+
+Split API pages:
+
+- [API: App](docs/api/app.md)
+- [API: Extractors](docs/api/extractors.md)
+- [API: Controllers](docs/api/controllers.md)
+- [API: Auth](docs/api/auth.md)
 
 ## Dependencies
 

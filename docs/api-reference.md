@@ -58,3 +58,7 @@ It is derived from `oxide-framework-core/src/lib.rs`.
 - `docs/app-builder-reference.md` for the full `App` builder API.
 - `docs/controllers.md` for controller patterns and route attributes.
 - `docs/state.md` for singleton and request-scoped state patterns.
+- `docs/api/app.md` for App-only API details.
+- `docs/api/extractors.md` for extractor semantics.
+- `docs/api/controllers.md` for controller trait/macro behavior.
+- `docs/api/auth.md` for auth API semantics.

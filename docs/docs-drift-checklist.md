@@ -6,6 +6,7 @@ Use this checklist whenever Oxide APIs change to keep docs accurate and runnable
 
 - If `oxide-framework-core/src/lib.rs` exports change:
   - update `docs/api-reference.md`
+  - update split pages in `docs/api/*.md` when relevant
   - update relevant topic docs (`docs/routing.md`, `docs/responses.md`, `docs/state.md`, `docs/auth.md`, `docs/controllers.md`)
 - If `App` builder methods change in `oxide-framework-core/src/app.rs`:
   - update `docs/app-builder-reference.md`
@@ -42,6 +43,7 @@ Use this checklist whenever Oxide APIs change to keep docs accurate and runnable
 - If crates are renamed or command flags change:
   - update `README.md` install commands
   - update `docs/cli.md`
+  - update `docs/cli-reference.md`
   - update crate layout in `docs/architecture.md`
 
 ## Quick Verification Steps

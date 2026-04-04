@@ -32,3 +32,6 @@ jobs:
         with:
           fail: true
           args: --verbose --no-progress README.md docs/**/*.md
+
+      - name: Rust doc tests
+        run: cargo test --workspace --doc
