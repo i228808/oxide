@@ -8,6 +8,7 @@ When `App::run()` is called, middleware is applied in this order (outermost firs
 
 ```
 Request
+  → Request ID      (extract/generate correlation id)
   → Request Logger  (captures start time)
   → CORS            (adds cross-origin headers)
   → Request Timeout (enforces max duration)
@@ -24,6 +25,8 @@ Request
 
 Logs every request with method, path, status, and latency. Enabled by default.
 
+The logger includes `request_id` when available.
+
 ```
 INFO oxide_framework_core::middleware: request completed method=GET path=/ status=200 latency_ms=0
 INFO oxide_framework_core::middleware: request completed method=POST path=/api/users status=201 latency_ms=1
@@ -36,6 +39,33 @@ Disable it:
 App::new()
     .disable_request_logging()
     .run();
+```
+
+## Built-in: Request ID / Correlation
+
+Oxide injects a request id into request extensions for every request.
+
+- If the configured header is present (default `x-request-id`), Oxide uses it.
+- Otherwise Oxide generates a UUID.
+- By default, Oxide echoes this value in the response header.
+
+Configure behavior:
+
+```rust
+App::new()
+    .request_id_header("x-correlation-id")
+    .disable_response_request_id_header() // optional
+    .run();
+```
+
+Extract in handlers with `RequestId`:
+
+```rust
+use oxide_framework_core::{ApiResponse, RequestId};
+
+async fn trace(RequestId(id): RequestId) -> ApiResponse<String> {
+    ApiResponse::ok(id)
+}
 ```
 
 ## Built-in: Rate Limiting

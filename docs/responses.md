@@ -4,6 +4,20 @@ Oxide provides `ApiResponse<T>` — a standardized response type that wraps all 
 
 This page reflects current behavior in `oxide-framework-core/src/response.rs`.
 
+Core middleware/extractors may also return typed framework errors via
+`FrameworkError`, using the same envelope shape plus a machine-readable `code`.
+
+Example:
+
+```json
+{
+  "status": 400,
+  "error": "validation failed",
+  "code": "validation_error",
+  "details": { ... }
+}
+```
+
 ## JSON Envelope Format
 
 ### Success

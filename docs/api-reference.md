@@ -15,6 +15,8 @@ It is derived from `oxide-framework-core/src/lib.rs`.
 | `OxideRouter` | Composable routing wrapper around Axum | `router.rs` |
 | `Method` | HTTP method enum for generic registration | `router.rs` |
 | `ApiResponse<T>` | Standard JSON response envelope | `response.rs` |
+| `FrameworkError` | Typed framework/core error with JSON mapping | `error.rs` |
+| `ReadinessCheck` | Trait for readiness checks used by `/health/ready` | `app.rs` |
 
 ## Extractors
 
@@ -24,6 +26,8 @@ It is derived from `oxide-framework-core/src/lib.rs`.
 | `Data<T>` | extractor | Access app singleton state (`Arc<T>`) |
 | `Inject<T>` | extractor | Alias of `Data<T>` for readable controller signatures |
 | `Scoped<T>` | extractor | Access request-scoped dependency created by `App::scoped_state(...)` |
+| `RequestId` | extractor | Access request correlation id injected by middleware |
+| `Validated<T>` | extractor | JSON extractor + `validator` validation |
 
 ## Auth API
 

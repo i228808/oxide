@@ -62,6 +62,8 @@ Controller startup flow:
 - `.cors_origins(origins)`
 - `.request_timeout(secs: u64)`
 - `.disable_request_logging()`
+- `.request_id_header(name: &str)`
+- `.disable_response_request_id_header()`
 - `.auth(config: AuthConfig)`
 
 ## Hooks and Custom Middleware
@@ -69,6 +71,16 @@ Controller startup flow:
 - `.before(f)` run pre-handler hook (`Request`, `Next`) on every request
 - `.after(f)` transform every response
 - `.layer(layer)` register a custom Tower layer
+
+## Health and Readiness
+
+- `.readiness_check(check)` register a typed readiness check (`ReadinessCheck`).
+- `.disable_default_health_routes()` disable built-in health endpoints.
+
+By default Oxide mounts:
+
+- `GET /health/live` (always live)
+- `GET /health/ready` (runs registered readiness checks)
 
 ## Request-scoped Dependencies
 

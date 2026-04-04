@@ -175,9 +175,12 @@ Oxide/
 | `ApiResponse<T>` | Standardized JSON response with success/error envelopes |
 | `AppConfig` | Configuration struct (YAML + env vars) |
 | `AppState` | Shared state container (config + user extensions) |
+| `FrameworkError` | Typed framework/core error mapped to JSON envelopes |
 | `Config` | Extractor for `AppConfig` in handlers |
 | `Data<T>` | Extractor for user-provided state in handlers |
 | `Inject<T>` | Alias for `Data<T>`, reads naturally in controller methods |
+| `RequestId` | Extractor for correlation/request id |
+| `Validated<T>` | JSON + validator-backed request extractor |
 | `AuthConfig` / `App::auth` | HS256 JWT from `Authorization: Bearer` and/or a session cookie |
 | `AuthClaims` | Decoded JWT subject + roles (in request extensions) |
 | `Authenticated`, `OptionalAuth` | Extractors for logged-in / optional identity |

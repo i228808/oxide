@@ -118,6 +118,40 @@ Fix:
 - Increase timeout threshold.
 - Optimize slow I/O and avoid blocking work in async handlers.
 
+## 400 with code `validation_error`
+
+Cause:
+
+- A `Validated<T>` extractor failed `validator` rules.
+
+Fix:
+
+- Check response `details` payload for field-level errors.
+- Ensure your request body satisfies `#[derive(Validate)]` constraints.
+
+## 503 on `/health/ready`
+
+Cause:
+
+- One or more registered readiness checks returned an error.
+
+Fix:
+
+- Inspect `failures` list in response body.
+- Resolve failing dependency and re-check readiness.
+
+## Missing or unexpected request ID behavior
+
+Cause:
+
+- Custom request id header name differs from client header.
+- Response echo may be disabled via `disable_response_request_id_header()`.
+
+Fix:
+
+- Ensure header name matches `request_id_header(...)`.
+- If needed, re-enable response echo by removing the disable call.
+
 ## CLI bench/test behavior differs by directory
 
 Cause:

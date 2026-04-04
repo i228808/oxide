@@ -27,10 +27,19 @@ Reference for `App` in `oxide-framework-core/src/app.rs`.
 - `.cors_origins([...])` restricts allowed origins.
 - `.request_timeout(secs)` enables request timeout.
 - `.disable_request_logging()` disables request logger.
+- `.request_id_header(name)` sets correlation header name (default `x-request-id`).
+- `.disable_response_request_id_header()` stops echoing request id in responses.
 - `.auth(config)` enables JWT/cookie auth layer.
 - `.before(f)` request hook.
 - `.after(f)` response hook.
 - `.layer(layer)` custom tower layer.
+
+## Health and Readiness
+
+- `.readiness_check(check)` registers a `ReadinessCheck` for readiness evaluation.
+- `.disable_default_health_routes()` disables built-in:
+  - `GET /health/live`
+  - `GET /health/ready`
 
 ## Runtime
 
