@@ -47,10 +47,10 @@ impl AppConfig {
         if let Ok(v) = std::env::var("OXIDE_HOST") {
             cfg.host = v;
         }
-        if let Ok(v) = std::env::var("OXIDE_PORT") {
-            if let Ok(port) = v.parse::<u16>() {
-                cfg.port = port;
-            }
+        if let Ok(v) = std::env::var("OXIDE_PORT")
+            && let Ok(port) = v.parse::<u16>()
+        {
+            cfg.port = port;
         }
         if let Ok(v) = std::env::var("OXIDE_APP_NAME") {
             cfg.app_name = v;

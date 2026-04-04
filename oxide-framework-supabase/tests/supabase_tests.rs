@@ -10,17 +10,15 @@ fn start_mock_server(status_line: &str, body: &'static str) -> String {
     let status_line = status_line.to_string();
 
     std::thread::spawn(move || {
-        for stream in listener.incoming().take(8) {
-            if let Ok(mut stream) = stream {
-                let mut buf = [0_u8; 4096];
-                let _ = stream.read(&mut buf);
-                let response = format!(
-                    "{status_line}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-                    body.len(), body
-                );
-                let _ = stream.write_all(response.as_bytes());
-                let _ = stream.flush();
-            }
+        for mut stream in listener.incoming().take(8).flatten() {
+            let mut buf = [0_u8; 4096];
+            let _ = stream.read(&mut buf);
+            let response = format!(
+                "{status_line}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                body.len(), body
+            );
+            let _ = stream.write_all(response.as_bytes());
+            let _ = stream.flush();
         }
     });
 

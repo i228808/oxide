@@ -1,4 +1,4 @@
-/// Integration tests for the `#[controller]` proc macro and DI system.
+//! Integration tests for the `#[controller]` proc macro and DI system.
 
 use oxide_framework_core::{controller, ApiResponse, App, Json, Path, AppState};
 use serde::{Deserialize, Serialize};

@@ -1,7 +1,7 @@
 use axum::{
-    Router,
     handler::Handler,
     routing::{delete, get, head, options, patch, post, put},
+    Router,
 };
 
 /// HTTP methods supported by the framework.
@@ -20,6 +20,12 @@ pub enum Method {
 /// with support for grouping, nesting, and merging.
 pub struct OxideRouter<S = ()> {
     inner: Router<S>,
+}
+
+impl<S: Clone + Send + Sync + 'static> Default for OxideRouter<S> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<S: Clone + Send + Sync + 'static> OxideRouter<S> {
@@ -140,4 +146,3 @@ impl<S: Clone + Send + Sync + 'static> OxideRouter<S> {
         self.inner
     }
 }
-

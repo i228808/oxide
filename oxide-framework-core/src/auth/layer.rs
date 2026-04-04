@@ -123,32 +123,29 @@ enum TokenResolution {
 }
 
 fn resolve_token(config: &AuthConfig, headers: &axum::http::HeaderMap) -> TokenResolution {
-    if config.bearer_token {
-        if let Some(auth) = headers.get(AUTHORIZATION) {
-            match auth.to_str() {
-                Ok(s) => {
-                    let s = s.trim();
-                    if let Some(rest) = s.strip_prefix("Bearer ").or_else(|| s.strip_prefix("bearer ")) {
-                        let t = rest.trim();
-                        if t.is_empty() {
-                            return TokenResolution::Malformed;
-                        }
-                        return TokenResolution::Some(t.to_string());
+    if config.bearer_token && let Some(auth) = headers.get(AUTHORIZATION) {
+        match auth.to_str() {
+            Ok(s) => {
+                let s = s.trim();
+                if let Some(rest) = s.strip_prefix("Bearer ").or_else(|| s.strip_prefix("bearer ")) {
+                    let t = rest.trim();
+                    if t.is_empty() {
+                        return TokenResolution::Malformed;
                     }
-                    // Authorization present but not Bearer — reject
-                    return TokenResolution::Malformed;
+                    return TokenResolution::Some(t.to_string());
                 }
-                Err(_) => return TokenResolution::Malformed,
+                // Authorization present but not Bearer — reject
+                return TokenResolution::Malformed;
             }
+            Err(_) => return TokenResolution::Malformed,
         }
     }
 
-    if let Some(name) = config.session_cookie_name.as_deref() {
-        if let Some(cookie_hdr) = headers.get(COOKIE).and_then(|v| v.to_str().ok()) {
-            if let Some(tok) = cookie_token(cookie_hdr, name) {
-                return TokenResolution::Some(tok);
-            }
-        }
+    if let Some(name) = config.session_cookie_name.as_deref()
+        && let Some(cookie_hdr) = headers.get(COOKIE).and_then(|v| v.to_str().ok())
+        && let Some(tok) = cookie_token(cookie_hdr, name)
+    {
+        return TokenResolution::Some(tok);
     }
 
     TokenResolution::None

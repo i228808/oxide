@@ -386,7 +386,7 @@ fn struct_name_to_snake_file(struct_name: &str) -> String {
 }
 
 fn to_upper_camel(s: &str) -> String {
-    s.split(|c: char| c == '_' || c == '-' || c == ' ')
+    s.split(['_', '-', ' '])
         .filter(|p| !p.is_empty())
         .map(|w| {
             let mut it = w.chars();

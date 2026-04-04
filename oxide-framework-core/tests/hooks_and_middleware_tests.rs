@@ -1,5 +1,5 @@
-/// Edge tests for lifecycle hooks, controller-level middleware,
-/// middleware ordering, and the Month 2 edge-case checklist.
+//! Edge tests for lifecycle hooks, controller-level middleware,
+//! middleware ordering, and the Month 2 edge-case checklist.
 
 use axum::extract::Request;
 use axum::middleware::Next;
@@ -125,10 +125,10 @@ async fn add_powered_by(mut res: Response) -> Response {
 }
 
 async fn counting_hook(req: Request, next: Next) -> Response {
-    if let Some(counter) = req.extensions().get::<AppState>() {
-        if let Some(c) = counter.get::<HitCounter>() {
-            c.0.fetch_add(1, Ordering::Relaxed);
-        }
+    if let Some(counter) = req.extensions().get::<AppState>()
+        && let Some(c) = counter.get::<HitCounter>()
+    {
+        c.0.fetch_add(1, Ordering::Relaxed);
     }
     next.run(req).await
 }

@@ -94,6 +94,12 @@ pub struct App {
     readiness_checks: Vec<Arc<dyn ReadinessCheck>>,
 }
 
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl App {
     /// Create a new `App` with default configuration.
     ///

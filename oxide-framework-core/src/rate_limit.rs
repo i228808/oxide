@@ -57,7 +57,7 @@ impl RateLimiterInner {
         // Periodic eviction: every 100 checks OR when map grows large.
         // Prevents unbounded memory growth from many unique IPs.
         let count = self.check_count.fetch_add(1, Ordering::Relaxed);
-        if count % 100 == 0 || clients.len() > 10_000 {
+        if count.is_multiple_of(100) || clients.len() > 10_000 {
             clients.retain(|_, w| now.duration_since(w.started) < window);
         }
 
@@ -86,23 +86,22 @@ impl RateLimiterInner {
 /// 3. Actual TCP peer address via `ConnectInfo<SocketAddr>`
 /// 4. `"unknown"` fallback
 fn extract_client_ip(req: &Request) -> String {
-    if let Some(forwarded) = req.headers().get("x-forwarded-for") {
-        if let Ok(value) = forwarded.to_str() {
-            if let Some(first_ip) = value.split(',').next() {
-                let ip = first_ip.trim();
-                if !ip.is_empty() {
-                    return ip.to_string();
-                }
-            }
+    if let Some(forwarded) = req.headers().get("x-forwarded-for")
+        && let Ok(value) = forwarded.to_str()
+        && let Some(first_ip) = value.split(',').next()
+    {
+        let ip = first_ip.trim();
+        if !ip.is_empty() {
+            return ip.to_string();
         }
     }
 
-    if let Some(real_ip) = req.headers().get("x-real-ip") {
-        if let Ok(value) = real_ip.to_str() {
-            let ip = value.trim();
-            if !ip.is_empty() {
-                return ip.to_string();
-            }
+    if let Some(real_ip) = req.headers().get("x-real-ip")
+        && let Ok(value) = real_ip.to_str()
+    {
+        let ip = value.trim();
+        if !ip.is_empty() {
+            return ip.to_string();
         }
     }
 

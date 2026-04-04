@@ -75,7 +75,6 @@ impl BenchCtrl {
 
 struct Stats {
     total: u64,
-    success: u64,
     errors: u64,
     duration: Duration,
     latencies: Vec<Duration>,
@@ -165,7 +164,6 @@ async fn run_load(url: &str, concurrency: usize, duration: Duration) -> Stats {
 
     Stats {
         total: total.load(Ordering::Relaxed),
-        success: success.load(Ordering::Relaxed),
         errors: errors.load(Ordering::Relaxed),
         duration,
         latencies: lats,

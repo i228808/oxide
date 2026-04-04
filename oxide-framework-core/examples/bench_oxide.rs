@@ -1,7 +1,5 @@
 use oxide_framework_core::{ApiResponse, App};
 use serde::Serialize;
-use std::time::Duration;
-
 #[derive(Serialize)]
 struct Msg {
     text: String,

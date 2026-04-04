@@ -1,0 +1,66 @@
+:root {
+  --bg: #f5f5ef;
+  --fg: #1f2a2e;
+  --sidebar-bg: #efe9dc;
+  --sidebar-fg: #243135;
+  --link: #0f5b7a;
+  --link-hover: #0b445c;
+  --quote-bg: #f0efe7;
+  --code-bg: #ece8dc;
+  --border: #d7cfbd;
+}
+
+html {
+  background: radial-gradient(circle at top right, #fef9e8, var(--bg) 45%, #ece8dc 100%);
+}
+
+body {
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  color: var(--fg);
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #f6f0e4 0%, var(--sidebar-bg) 100%);
+  border-right: 1px solid var(--border);
+}
+
+.sidebar .chapter li a,
+.sidebar .chapter li a:hover {
+  color: var(--sidebar-fg);
+}
+
+.content main {
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 28px;
+  box-shadow: 0 10px 30px rgba(58, 54, 39, 0.08);
+}
+
+a,
+a:hover {
+  color: var(--link);
+}
+
+a:hover {
+  color: var(--link-hover);
+}
+
+code {
+  background: var(--code-bg);
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+}
+
+pre code {
+  background: transparent;
+}
+
+blockquote {
+  background: var(--quote-bg);
+  border-left: 4px solid #b8a87f;
+}
+
+h1, h2, h3 {
+  color: #1a343d;
+}

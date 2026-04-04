@@ -7,3 +7,8 @@ src = "."
 
 [build]
 build-dir = "../site"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "light"
+additional-css = ["theme/custom.css"]

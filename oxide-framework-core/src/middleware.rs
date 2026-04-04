@@ -97,12 +97,12 @@ pub(crate) async fn request_id_middleware(
     request.extensions_mut().insert(RequestId(id.clone()));
     let mut response = next.run(request).await;
 
-    if config.include_response_header {
-        if let Ok(header_value) = HeaderValue::from_str(&id) {
-            response
-                .headers_mut()
-                .insert(config.header_name, header_value);
-        }
+    if config.include_response_header
+        && let Ok(header_value) = HeaderValue::from_str(&id)
+    {
+        response
+            .headers_mut()
+            .insert(config.header_name, header_value);
     }
 
     response
