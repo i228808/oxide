@@ -1,0 +1,10 @@
+[book]
+title = "Oxide Documentation"
+description = "Oxide web framework documentation"
+authors = ["Oxide Contributors"]
+language = "en"
+multilingual = false
+src = "."
+
+[build]
+build-dir = "../site"

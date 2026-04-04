@@ -25,3 +25,9 @@ agent-transcripts/
 mcps/
 terminals/
 agent-tools/
+
+# Local AI guidance
+skills.md
+
+# Docs build output
+site/

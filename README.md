@@ -214,6 +214,8 @@ Oxide/
 - [Troubleshooting](docs/troubleshooting.md) — Common 401/403/500 and setup fixes
 - [Docs Drift Checklist](docs/docs-drift-checklist.md) — Keep docs aligned with code changes
 
+GitHub Pages docs are built from `docs/` using mdBook.
+
 Split API pages:
 
 - [API: App](docs/api/app.md)
