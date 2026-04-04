@@ -1,5 +1,6 @@
 use std::future::Future;
 use std::net::SocketAddr;
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -435,16 +436,42 @@ impl App {
         let mut router = base.into_inner();
 
         if self.health.enabled {
+            let base_router = router.clone();
             let checks = self.readiness_checks.clone();
-            router = router
-                .route("/health/live", axum::routing::get(health_live))
-                .route(
-                    "/health/ready",
-                    axum::routing::get(move || {
-                        let checks = checks.clone();
-                        async move { health_ready(checks).await }
-                    }),
-                );
+            let candidate = catch_unwind(AssertUnwindSafe(|| {
+                base_router
+                    .route("/health/live", axum::routing::get(health_live))
+                    .route(
+                        "/health/ready",
+                        axum::routing::get(move || {
+                            let checks = checks.clone();
+                            async move { health_ready(checks).await }
+                        }),
+                    )
+            }));
+
+            match candidate {
+                Ok(with_health) => {
+                    router = with_health;
+                }
+                Err(panic_payload) => {
+                    let message = if let Some(s) = panic_payload.downcast_ref::<String>() {
+                        s.clone()
+                    } else if let Some(s) = panic_payload.downcast_ref::<&'static str>() {
+                        s.to_string()
+                    } else {
+                        String::new()
+                    };
+
+                    if message.contains("Overlapping method route") {
+                        tracing::warn!(
+                            "Skipping default health routes because user routes already exist"
+                        );
+                    } else {
+                        std::panic::resume_unwind(panic_payload);
+                    }
+                }
+            }
         }
 
         // Layer application order: first applied = innermost = closest to the route handler.

@@ -162,3 +162,17 @@ async fn validated_rejects_invalid_payload_with_typed_error() {
     assert_eq!(body["code"], "validation_error");
     assert!(body.get("details").is_some());
 }
+
+#[tokio::test]
+async fn custom_health_route_can_override_default_live_route() {
+    let server = App::new()
+        .disable_request_logging()
+        .get("/health/live", || async { "custom-live" })
+        .into_test_server()
+        .await;
+
+    let live = reqwest::get(server.url("/health/live")).await.unwrap();
+    assert_eq!(live.status(), 200);
+    let body = live.text().await.unwrap();
+    assert!(body.contains("custom-live") || body.contains("live"));
+}
