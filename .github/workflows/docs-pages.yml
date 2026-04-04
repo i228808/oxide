@@ -31,12 +31,12 @@ jobs:
           mdbook-version: "latest"
 
       - name: Build docs site
-        run: mdbook build docs --dest-dir ../site
+        run: mdbook build docs
 
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: ./site
 
   deploy:
     needs: build
