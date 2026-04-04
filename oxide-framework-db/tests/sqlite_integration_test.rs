@@ -1,7 +1,8 @@
 use oxide_framework_core::{App, ApiResponse, Data};
-use oxide_framework_db::{AppDbExt, ConnectMode, Sqlite};
+use oxide_framework_db::{AppDbExt, ConnectMode, Postgres, Sqlite};
 use reqwest::StatusCode;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::task::JoinSet;
 
 // A basic handler that uses the injected database pool
@@ -84,5 +85,45 @@ async fn test_db_concurrency_and_pool_limits() {
     while let Some(res) = tasks.join_next().await {
         res.unwrap();
     }
+}
+
+#[tokio::test]
+async fn strict_mode_reports_not_ready_for_unreachable_postgres() {
+    let server = App::new()
+        .disable_request_logging()
+        .database_with_mode::<Postgres>(
+            "postgres://postgres:postgres@127.0.0.1:1/postgres",
+            ConnectMode::Strict,
+            |opts: sqlx::pool::PoolOptions<Postgres>| {
+                opts.max_connections(1)
+                    .acquire_timeout(Duration::from_millis(250))
+            },
+        )
+        .into_test_server()
+        .await;
+
+    let res = reqwest::get(server.url("/health/ready")).await.unwrap();
+    assert_eq!(res.status(), StatusCode::SERVICE_UNAVAILABLE);
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(body["code"], "readiness_failed");
+}
+
+#[tokio::test]
+async fn lazy_mode_does_not_fail_readiness_for_unreachable_postgres() {
+    let server = App::new()
+        .disable_request_logging()
+        .database_with_mode::<Postgres>(
+            "postgres://postgres:postgres@127.0.0.1:1/postgres",
+            ConnectMode::Lazy,
+            |opts: sqlx::pool::PoolOptions<Postgres>| {
+                opts.max_connections(1)
+                    .acquire_timeout(Duration::from_millis(250))
+            },
+        )
+        .into_test_server()
+        .await;
+
+    let res = reqwest::get(server.url("/health/ready")).await.unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
 }
 

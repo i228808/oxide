@@ -72,9 +72,14 @@ pub trait AppMongoExt {
 impl AppMongoExt for App {
     fn mongodb(self, config: MongoConfig) -> Self {
         let strict = config.strict;
-        let rt = tokio::runtime::Runtime::new().expect("failed to create runtime for mongodb init");
-        let handle = rt
-            .block_on(MongoHandle::connect(&config))
+        let cfg_for_init = config.clone();
+        let handle = std::thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new()
+                .expect("failed to create runtime for mongodb init");
+            rt.block_on(MongoHandle::connect(&cfg_for_init))
+        })
+            .join()
+            .expect("failed to join mongodb init thread")
             .expect("failed to initialize mongodb client");
 
         let app = self.state(handle.clone());
