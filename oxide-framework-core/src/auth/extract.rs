@@ -83,12 +83,13 @@ impl IntoResponse for AuthRejection {
     fn into_response(self) -> Response {
         match self {
             AuthRejection::Unauthorized => {
-                ApiResponse::<serde_json::Value>::unauthorized("authentication required").into_response()
+                ApiResponse::<serde_json::Value>::unauthorized("authentication required")
+                    .into_response()
             }
             AuthRejection::Forbidden => {
-                ApiResponse::<serde_json::Value>::forbidden("insufficient permissions").into_response()
+                ApiResponse::<serde_json::Value>::forbidden("insufficient permissions")
+                    .into_response()
             }
         }
     }
 }
-

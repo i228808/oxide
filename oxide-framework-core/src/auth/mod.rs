@@ -16,4 +16,3 @@ pub use config::AuthConfig;
 pub use extract::{AuthRejection, Authenticated, OptionalAuth, RequireRole, RoleName};
 pub use layer::AuthLayer;
 pub use token::encode_token;
-

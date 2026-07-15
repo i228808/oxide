@@ -170,4 +170,3 @@ fn strip_route_attrs(impl_block: &mut ItemImpl) {
         }
     }
 }
-

@@ -4,10 +4,10 @@
 use axum::extract::Request;
 use axum::middleware::Next;
 use axum::response::Response;
-use oxide_framework_core::{controller, ApiResponse, App, AppState};
+use oxide_framework_core::{ApiResponse, App, AppState, controller};
 use serde::{Deserialize, Serialize};
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 // ---------------------------------------------------------------------------
 // Shared types
@@ -32,7 +32,9 @@ struct ApiV1Controller;
 impl ApiV1Controller {
     #[get("/ping")]
     async fn ping(&self) -> ApiResponse<Msg> {
-        ApiResponse::ok(Msg { text: "pong-v1".into() })
+        ApiResponse::ok(Msg {
+            text: "pong-v1".into(),
+        })
     }
 }
 
@@ -43,7 +45,9 @@ struct ApiV2Controller;
 impl ApiV2Controller {
     #[get("/ping")]
     async fn ping(&self) -> ApiResponse<Msg> {
-        ApiResponse::ok(Msg { text: "pong-v2".into() })
+        ApiResponse::ok(Msg {
+            text: "pong-v2".into(),
+        })
     }
 }
 
@@ -58,25 +62,30 @@ impl GuardedController {
 
     #[get("/secret")]
     async fn secret(&self) -> ApiResponse<Msg> {
-        ApiResponse::ok(Msg { text: "top-secret".into() })
+        ApiResponse::ok(Msg {
+            text: "top-secret".into(),
+        })
     }
 
     #[get("/also-secret")]
     async fn also_secret(&self) -> ApiResponse<Msg> {
-        ApiResponse::ok(Msg { text: "classified".into() })
+        ApiResponse::ok(Msg {
+            text: "classified".into(),
+        })
     }
 }
 
 async fn require_secret_header(req: Request, next: Next) -> Response {
-    if req.headers().get("x-secret").map(|v| v == "open-sesame").unwrap_or(false) {
+    if req
+        .headers()
+        .get("x-secret")
+        .map(|v| v == "open-sesame")
+        .unwrap_or(false)
+    {
         next.run(req).await
     } else {
         let body = serde_json::json!({"status": 403, "error": "forbidden"});
-        (
-            axum::http::StatusCode::FORBIDDEN,
-            axum::Json(body),
-        )
-            .into_response()
+        (axum::http::StatusCode::FORBIDDEN, axum::Json(body)).into_response()
     }
 }
 
@@ -92,7 +101,9 @@ impl PanicController {
 
     #[get("/safe")]
     async fn safe(&self) -> ApiResponse<Msg> {
-        ApiResponse::ok(Msg { text: "survived".into() })
+        ApiResponse::ok(Msg {
+            text: "survived".into(),
+        })
     }
 }
 
@@ -104,14 +115,20 @@ struct CountingController {
 impl CountingController {
     fn new(state: &AppState) -> Self {
         Self {
-            counter: state.get::<HitCounter>().expect("HitCounter missing").as_ref().clone(),
+            counter: state
+                .get::<HitCounter>()
+                .expect("HitCounter missing")
+                .as_ref()
+                .clone(),
         }
     }
 
     #[get("/hit")]
     async fn hit(&self) -> ApiResponse<Msg> {
         let n = self.counter.0.fetch_add(1, Ordering::Relaxed) + 1;
-        ApiResponse::ok(Msg { text: format!("{n}") })
+        ApiResponse::ok(Msg {
+            text: format!("{n}"),
+        })
     }
 }
 
@@ -120,7 +137,8 @@ impl CountingController {
 // ---------------------------------------------------------------------------
 
 async fn add_powered_by(mut res: Response) -> Response {
-    res.headers_mut().insert("x-powered-by", "Oxide".parse().unwrap());
+    res.headers_mut()
+        .insert("x-powered-by", "Oxide".parse().unwrap());
     res
 }
 
@@ -186,7 +204,11 @@ async fn before_hook_can_short_circuit() {
     let server = App::new()
         .disable_request_logging()
         .before(block_everything)
-        .get("/", || async { ApiResponse::ok(Msg { text: "should not reach".into() }) })
+        .get("/", || async {
+            ApiResponse::ok(Msg {
+                text: "should not reach".into(),
+            })
+        })
         .into_test_server()
         .await;
 
@@ -224,7 +246,9 @@ async fn controller_middleware_blocks_without_header() {
         .into_test_server()
         .await;
 
-    let res = reqwest::get(server.url("/api/guarded/secret")).await.unwrap();
+    let res = reqwest::get(server.url("/api/guarded/secret"))
+        .await
+        .unwrap();
     assert_eq!(res.status(), 403);
 }
 
@@ -257,7 +281,9 @@ async fn controller_middleware_applies_to_all_routes() {
         .into_test_server()
         .await;
 
-    let res = reqwest::get(server.url("/api/guarded/also-secret")).await.unwrap();
+    let res = reqwest::get(server.url("/api/guarded/also-secret"))
+        .await
+        .unwrap();
     assert_eq!(res.status(), 403);
 }
 
@@ -271,7 +297,9 @@ async fn controller_middleware_doesnt_leak_to_other_controllers() {
         .await;
 
     // Guarded controller blocks
-    let res = reqwest::get(server.url("/api/guarded/secret")).await.unwrap();
+    let res = reqwest::get(server.url("/api/guarded/secret"))
+        .await
+        .unwrap();
     assert_eq!(res.status(), 403);
 
     // V1 controller is unaffected
@@ -293,9 +321,17 @@ async fn multiple_versioned_controllers() {
         .await;
 
     let v1: serde_json::Value = reqwest::get(server.url("/api/v1/ping"))
-        .await.unwrap().json().await.unwrap();
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
     let v2: serde_json::Value = reqwest::get(server.url("/api/v2/ping"))
-        .await.unwrap().json().await.unwrap();
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
 
     assert_eq!(v1["data"]["text"], "pong-v1");
     assert_eq!(v2["data"]["text"], "pong-v2");
@@ -305,15 +341,25 @@ async fn multiple_versioned_controllers() {
 async fn controllers_and_manual_routes_coexist() {
     let server = App::new()
         .disable_request_logging()
-        .get("/health", || async { ApiResponse::ok(Msg { text: "up".into() }) })
+        .get("/health", || async {
+            ApiResponse::ok(Msg { text: "up".into() })
+        })
         .controller::<ApiV1Controller>()
         .into_test_server()
         .await;
 
     let health: serde_json::Value = reqwest::get(server.url("/health"))
-        .await.unwrap().json().await.unwrap();
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
     let v1: serde_json::Value = reqwest::get(server.url("/api/v1/ping"))
-        .await.unwrap().json().await.unwrap();
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
 
     assert_eq!(health["data"]["text"], "up");
     assert_eq!(v1["data"]["text"], "pong-v1");
@@ -550,7 +596,11 @@ async fn hook_runs_after_state_injection() {
     let res = reqwest::get(server.url("/")).await.unwrap();
     assert_eq!(res.status(), 200);
     assert_eq!(
-        res.headers().get("x-state-available").unwrap().to_str().unwrap(),
+        res.headers()
+            .get("x-state-available")
+            .unwrap()
+            .to_str()
+            .unwrap(),
         "yes"
     );
 }
@@ -573,5 +623,3 @@ async fn timeout_applies_to_hooks() {
     let res = reqwest::get(server.url("/")).await.unwrap();
     assert_eq!(res.status(), 408);
 }
-
-

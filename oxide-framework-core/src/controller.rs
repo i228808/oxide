@@ -39,4 +39,3 @@ pub trait Controller: Send + Sync + Sized + 'static {
         router
     }
 }
-

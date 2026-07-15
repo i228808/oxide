@@ -1,8 +1,8 @@
-use oxide_framework_core::{App, ApiResponse, Config, Data, Json, OxideRouter, Path};
+use oxide_framework_core::{ApiResponse, App, Config, Data, Json, OxideRouter, Path};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 // ============================================================================
 // Helpers
@@ -22,9 +22,7 @@ struct Msg {
 }
 
 async fn json_ok() -> ApiResponse<Msg> {
-    ApiResponse::ok(Msg {
-        text: "hi".into(),
-    })
+    ApiResponse::ok(Msg { text: "hi".into() })
 }
 
 async fn greet(Path(name): Path<String>) -> String {
@@ -213,7 +211,10 @@ async fn test_cors_preflight_returns_ok() {
         .unwrap();
 
     let status = res.status().as_u16();
-    assert!(status == 200 || status == 204, "preflight status was {status}");
+    assert!(
+        status == 200 || status == 204,
+        "preflight status was {status}"
+    );
     assert!(res.headers().contains_key("access-control-allow-origin"));
     assert!(res.headers().contains_key("access-control-allow-methods"));
 }
@@ -533,7 +534,10 @@ async fn test_rate_limit_concurrent_requests() {
     }
 
     assert_eq!(ok_count, 50, "exactly 50 requests should succeed");
-    assert_eq!(limited_count, 50, "exactly 50 requests should be rate-limited");
+    assert_eq!(
+        limited_count, 50,
+        "exactly 50 requests should be rate-limited"
+    );
     assert_eq!(ok_count + limited_count, 100, "no requests lost");
 }
 
@@ -746,9 +750,9 @@ async fn test_burst_1000_requests_no_crash() {
     for _ in 0..1000 {
         let c = client.clone();
         let u = url.clone();
-        handles.push(tokio::spawn(
-            async move { c.get(&u).send().await.unwrap().status() },
-        ));
+        handles.push(tokio::spawn(async move {
+            c.get(&u).send().await.unwrap().status()
+        }));
     }
 
     let mut success = 0u64;
@@ -776,9 +780,9 @@ async fn test_burst_with_rate_limit_holds() {
     for _ in 0..500 {
         let c = client.clone();
         let u = url.clone();
-        handles.push(tokio::spawn(
-            async move { c.get(&u).send().await.unwrap().status() },
-        ));
+        handles.push(tokio::spawn(async move {
+            c.get(&u).send().await.unwrap().status()
+        }));
     }
 
     let mut ok = 0u64;
@@ -1347,7 +1351,11 @@ async fn test_full_middleware_failure_chain() {
         .send()
         .await
         .unwrap();
-    assert_eq!(res.status(), 200, "server must survive the full failure chain");
+    assert_eq!(
+        res.status(),
+        200,
+        "server must survive the full failure chain"
+    );
 }
 
 #[tokio::test]
@@ -1388,4 +1396,3 @@ async fn test_concurrent_panics_and_normal_requests() {
     assert_eq!(crash_500, 50, "all panic requests should return 500");
     assert_eq!(ok_200, 50, "all normal requests should return 200");
 }
-

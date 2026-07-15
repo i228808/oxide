@@ -1,7 +1,7 @@
 use axum::{
+    Router,
     handler::Handler,
     routing::{delete, get, head, options, patch, post, put},
-    Router,
 };
 
 /// HTTP methods supported by the framework.

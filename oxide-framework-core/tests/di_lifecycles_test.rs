@@ -1,7 +1,7 @@
-use oxide_framework_core::{App, ApiResponse, Data};
+use oxide_framework_core::{ApiResponse, App, Data};
 use reqwest::StatusCode;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 // We need a way to differentiate Singleton and Request-Scoped DI
 
@@ -42,7 +42,7 @@ async fn test_singleton_vs_scoped_lifecycles() {
         .await;
 
     let client = reqwest::Client::new();
-    
+
     // First request
     let res1 = client.get(server.url("/scopes")).send().await.unwrap();
     assert_eq!(res1.status(), StatusCode::OK);
@@ -65,15 +65,11 @@ async fn test_missing_scoped_dependency_fails_gracefully() {
         ApiResponse::ok(())
     }
 
-    let server = App::new()
-        .get("/bad", bad_handler)
-        .into_test_server()
-        .await;
+    let server = App::new().get("/bad", bad_handler).into_test_server().await;
 
     let client = reqwest::Client::new();
     let res = client.get(server.url("/bad")).send().await.unwrap();
-    
+
     // Framework should catch the missing extraction and return 500
     assert_eq!(res.status(), StatusCode::INTERNAL_SERVER_ERROR);
 }
-

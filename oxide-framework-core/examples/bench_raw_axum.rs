@@ -3,10 +3,10 @@
 //! Start:  `cargo run -p oxide-framework-core --release --example bench_raw_axum`
 //! Test:   `wrk -t4 -c100 -d30s http://127.0.0.1:3001/json`
 
+use axum::Router;
 use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
-use axum::Router;
 use std::net::SocketAddr;
 
 async fn json_handler() -> impl IntoResponse {
@@ -38,4 +38,3 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
-

@@ -1,5 +1,5 @@
-use axum::extract::connect_info::ConnectInfo;
 use axum::extract::Request;
+use axum::extract::connect_info::ConnectInfo;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use std::collections::HashMap;
@@ -175,8 +175,7 @@ where
                 "status": 429,
                 "error": "rate limit exceeded"
             });
-            let mut response =
-                (StatusCode::TOO_MANY_REQUESTS, axum::Json(body)).into_response();
+            let mut response = (StatusCode::TOO_MANY_REQUESTS, axum::Json(body)).into_response();
             response.headers_mut().insert(
                 axum::http::header::RETRY_AFTER,
                 axum::http::HeaderValue::from_str(&retry_secs).unwrap(),
@@ -188,4 +187,3 @@ where
         Box::pin(async move { future.await.map(|r| r.into_response()) })
     }
 }
-

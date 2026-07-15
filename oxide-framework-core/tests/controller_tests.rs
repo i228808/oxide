@@ -1,9 +1,9 @@
 //! Integration tests for the `#[controller]` proc macro and DI system.
 
-use oxide_framework_core::{controller, ApiResponse, App, Json, Path, AppState};
+use oxide_framework_core::{ApiResponse, App, AppState, Json, Path, controller};
 use serde::{Deserialize, Serialize};
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 // ---------------------------------------------------------------------------
 // Shared types
@@ -45,15 +45,25 @@ struct UserController {
 impl UserController {
     fn new(state: &AppState) -> Self {
         Self {
-            db: state.get::<DbPool>().expect("DbPool not registered").as_ref().clone(),
+            db: state
+                .get::<DbPool>()
+                .expect("DbPool not registered")
+                .as_ref()
+                .clone(),
         }
     }
 
     #[get("/")]
     async fn list(&self) -> ApiResponse<Vec<User>> {
         ApiResponse::ok(vec![
-            User { id: 1, name: "Alice".into() },
-            User { id: 2, name: "Bob".into() },
+            User {
+                id: 1,
+                name: "Alice".into(),
+            },
+            User {
+                id: 2,
+                name: "Bob".into(),
+            },
         ])
     }
 
@@ -67,7 +77,10 @@ impl UserController {
 
     #[post("/")]
     async fn create(&self, Json(body): Json<CreateUser>) -> ApiResponse<User> {
-        ApiResponse::created(User { id: 99, name: body.name })
+        ApiResponse::created(User {
+            id: 99,
+            name: body.name,
+        })
     }
 
     #[delete("/{id}")]
@@ -79,7 +92,9 @@ impl UserController {
 
     #[get("/db")]
     async fn db_info(&self) -> ApiResponse<Msg> {
-        ApiResponse::ok(Msg { text: self.db.url.clone() })
+        ApiResponse::ok(Msg {
+            text: self.db.url.clone(),
+        })
     }
 }
 
@@ -94,7 +109,9 @@ struct HealthController;
 impl HealthController {
     #[get("/")]
     async fn check(&self) -> ApiResponse<Msg> {
-        ApiResponse::ok(Msg { text: "healthy".into() })
+        ApiResponse::ok(Msg {
+            text: "healthy".into(),
+        })
     }
 }
 
@@ -110,7 +127,11 @@ struct CounterController {
 impl CounterController {
     fn new(state: &AppState) -> Self {
         Self {
-            counter: state.get::<Counter>().expect("Counter not registered").as_ref().clone(),
+            counter: state
+                .get::<Counter>()
+                .expect("Counter not registered")
+                .as_ref()
+                .clone(),
         }
     }
 
@@ -138,7 +159,9 @@ impl CounterController {
 fn test_app() -> App {
     App::new()
         .disable_request_logging()
-        .state(DbPool { url: "postgres://test".into() })
+        .state(DbPool {
+            url: "postgres://test".into(),
+        })
         .state(Counter(Arc::new(AtomicU64::new(0))))
         .controller::<UserController>()
         .controller::<HealthController>()
@@ -203,10 +226,7 @@ async fn controller_delete() {
 
     assert_eq!(res.status(), 200);
     let body: serde_json::Value = res.json().await.unwrap();
-    assert!(body["data"]["text"]
-        .as_str()
-        .unwrap()
-        .contains("deleted 7"));
+    assert!(body["data"]["text"].as_str().unwrap().contains("deleted 7"));
 }
 
 #[tokio::test]
@@ -277,11 +297,7 @@ async fn controller_wrong_method_returns_405() {
     let client = reqwest::Client::new();
     let server = test_app().into_test_server().await;
 
-    let res = client
-        .put(server.url("/api/users"))
-        .send()
-        .await
-        .unwrap();
+    let res = client.put(server.url("/api/users")).send().await.unwrap();
 
     assert!(res.status() == 405 || res.status() == 404);
 }
@@ -304,7 +320,9 @@ async fn controller_with_cors() {
     let server = App::new()
         .disable_request_logging()
         .cors_permissive()
-        .state(DbPool { url: "pg://".into() })
+        .state(DbPool {
+            url: "pg://".into(),
+        })
         .state(Counter(Arc::new(AtomicU64::new(0))))
         .controller::<UserController>()
         .into_test_server()
@@ -327,7 +345,9 @@ async fn controller_with_rate_limit() {
     let server = App::new()
         .disable_request_logging()
         .rate_limit(3, 60)
-        .state(DbPool { url: "pg://".into() })
+        .state(DbPool {
+            url: "pg://".into(),
+        })
         .state(Counter(Arc::new(AtomicU64::new(0))))
         .controller::<UserController>()
         .into_test_server()
@@ -364,4 +384,3 @@ async fn concurrent_controller_requests() {
         h.await.unwrap();
     }
 }
-
