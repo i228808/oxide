@@ -1,0 +1,21 @@
+# Normalize line endings to LF for all text files
+* text=auto
+
+# Rust source files — always LF
+*.rs text eol=lf
+*.toml text eol=lf
+*.lock text eol=lf
+
+# Documentation and config
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+*.fish text eol=lf
+
+# Git config
+.gitattributes text eol=lf
+.gitignore text eol=lf
