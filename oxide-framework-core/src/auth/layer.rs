@@ -5,12 +5,12 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 
+use axum::Json;
 use axum::body::Body;
 use axum::http::header::{AUTHORIZATION, COOKIE};
 use axum::http::{Request, StatusCode};
-use axum::Json;
 use axum::response::{IntoResponse, Response};
-use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use tower::{Layer, Service};
 use tracing::debug;
 
@@ -91,19 +91,21 @@ where
 
             match token_result {
                 TokenResolution::None => inner.call(req).await,
-                TokenResolution::Some(token) => match decode::<AuthClaims>(&token, &key, &validation) {
-                    Ok(data) => {
-                        req.extensions_mut().insert(data.claims);
-                        inner.call(req).await
+                TokenResolution::Some(token) => {
+                    match decode::<AuthClaims>(&token, &key, &validation) {
+                        Ok(data) => {
+                            req.extensions_mut().insert(data.claims);
+                            inner.call(req).await
+                        }
+                        Err(e) => {
+                            debug!(error = %e, "jwt validation failed");
+                            Ok(auth_error_response(
+                                StatusCode::UNAUTHORIZED,
+                                "invalid or expired token",
+                            ))
+                        }
                     }
-                    Err(e) => {
-                        debug!(error = %e, "jwt validation failed");
-                        Ok(auth_error_response(
-                            StatusCode::UNAUTHORIZED,
-                            "invalid or expired token",
-                        ))
-                    }
-                },
+                }
                 TokenResolution::Malformed => Ok(auth_error_response(
                     StatusCode::UNAUTHORIZED,
                     "malformed authorization",
@@ -123,11 +125,16 @@ enum TokenResolution {
 }
 
 fn resolve_token(config: &AuthConfig, headers: &axum::http::HeaderMap) -> TokenResolution {
-    if config.bearer_token && let Some(auth) = headers.get(AUTHORIZATION) {
+    if config.bearer_token
+        && let Some(auth) = headers.get(AUTHORIZATION)
+    {
         match auth.to_str() {
             Ok(s) => {
                 let s = s.trim();
-                if let Some(rest) = s.strip_prefix("Bearer ").or_else(|| s.strip_prefix("bearer ")) {
+                if let Some(rest) = s
+                    .strip_prefix("Bearer ")
+                    .or_else(|| s.strip_prefix("bearer "))
+                {
                     let t = rest.trim();
                     if t.is_empty() {
                         return TokenResolution::Malformed;
@@ -170,4 +177,3 @@ fn auth_error_response(status: StatusCode, message: &str) -> Response {
     });
     (status, Json(body)).into_response()
 }
-

@@ -1,7 +1,7 @@
 use axum::extract::Request;
-use axum::http::header::HeaderName;
 use axum::http::HeaderValue;
 use axum::http::StatusCode;
+use axum::http::header::HeaderName;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use std::convert::Infallible;
@@ -237,4 +237,3 @@ where
         Box::pin(self.inner.call(req))
     }
 }
-

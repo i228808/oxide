@@ -1,4 +1,4 @@
-use oxide_framework_core::{App, ApiResponse, Data};
+use oxide_framework_core::{ApiResponse, App, Data};
 use oxide_framework_supabase::{AppSupabaseExt, SupabaseConfig};
 use serde_json::json;
 use std::io::{Read, Write};
@@ -15,7 +15,8 @@ fn start_mock_server(status_line: &str, body: &'static str) -> String {
             let _ = stream.read(&mut buf);
             let response = format!(
                 "{status_line}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-                body.len(), body
+                body.len(),
+                body
             );
             let _ = stream.write_all(response.as_bytes());
             let _ = stream.flush();
@@ -63,10 +64,7 @@ async fn select_works_through_injected_client() {
     async fn handler(
         Data(client): Data<oxide_framework_supabase::SupabaseClient>,
     ) -> ApiResponse<serde_json::Value> {
-        let data = client
-            .select("users", &[("select", "*")])
-            .await
-            .unwrap();
+        let data = client.select("users", &[("select", "*")]).await.unwrap();
         ApiResponse::ok(data)
     }
 

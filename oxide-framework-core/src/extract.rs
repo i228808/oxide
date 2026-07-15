@@ -24,10 +24,7 @@ pub struct Config(pub Arc<AppConfig>);
 impl<S: Send + Sync> FromRequestParts<S> for Config {
     type Rejection = FrameworkError;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         parts
             .extensions
             .get::<AppState>()
@@ -59,10 +56,7 @@ pub struct Data<T: Send + Sync + 'static>(pub Arc<T>);
 impl<S: Send + Sync, T: Send + Sync + 'static> FromRequestParts<S> for Data<T> {
     type Rejection = FrameworkError;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let app_state = parts
             .extensions
             .get::<AppState>()
@@ -101,10 +95,7 @@ pub struct Inject<T: Send + Sync + 'static>(pub Arc<T>);
 impl<S: Send + Sync, T: Send + Sync + 'static> FromRequestParts<S> for Inject<T> {
     type Rejection = FrameworkError;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let app_state = parts
             .extensions
             .get::<AppState>()
@@ -156,10 +147,7 @@ pub struct RequestId(pub String);
 impl<S: Send + Sync> FromRequestParts<S> for RequestId {
     type Rejection = FrameworkError;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         parts
             .extensions
             .get::<RequestId>()
@@ -198,5 +186,3 @@ where
         Ok(Validated(value))
     }
 }
-
-

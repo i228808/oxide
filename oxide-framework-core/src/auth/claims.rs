@@ -51,4 +51,3 @@ impl AuthClaims {
         roles.iter().all(|r| self.has_role(r))
     }
 }
-

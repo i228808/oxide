@@ -12,11 +12,18 @@ struct User {
 }
 
 async fn oxide_json() -> ApiResponse<Msg> {
-    ApiResponse::ok(Msg { text: "hello".into() })
+    ApiResponse::ok(Msg {
+        text: "hello".into(),
+    })
 }
 
-async fn oxide_path(oxide_framework_core::Path(id): oxide_framework_core::Path<u64>) -> ApiResponse<User> {
-    ApiResponse::ok(User { id, name: format!("user-{id}") })
+async fn oxide_path(
+    oxide_framework_core::Path(id): oxide_framework_core::Path<u64>,
+) -> ApiResponse<User> {
+    ApiResponse::ok(User {
+        id,
+        name: format!("user-{id}"),
+    })
 }
 
 #[tokio::main]
@@ -32,4 +39,3 @@ async fn main() {
         .serve()
         .await;
 }
-

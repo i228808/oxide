@@ -5,22 +5,22 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use axum::Router;
 use axum::extract::Request;
 use axum::handler::Handler;
 use axum::http::HeaderName;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
-use axum::Router;
 use tokio::net::TcpListener;
 use tower_http::catch_panic::CatchPanicLayer;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 
+use crate::auth::{AuthConfig, AuthLayer};
 use crate::config::AppConfig;
 use crate::controller::Controller;
 use crate::error::FrameworkError;
 use crate::logging;
-use crate::auth::{AuthConfig, AuthLayer};
 use crate::middleware::{self, InjectStateLayer, RequestIdConfig, RequestTimeoutLayer};
 use crate::rate_limit::RateLimitLayer;
 use crate::router::{Method, OxideRouter};
@@ -363,7 +363,7 @@ impl App {
     }
 
     /// Register a request-scoped dependency factory.
-    /// 
+    ///
     /// The factory closure is called on *every* incoming request, and its output
     /// is automatically injected into the request extensions, making it available
     /// to handlers via the `Scoped<T>` extractor.
@@ -376,16 +376,18 @@ impl App {
         let factory = Arc::new(factory);
         self.user_layers.push(Box::new(move |router: Router| {
             let f = factory.clone();
-            router.layer(axum::middleware::from_fn(move |req: Request, next: Next| {
-                let f = f.clone();
-                async move {
-                    let (mut parts, body) = req.into_parts();
-                    let val = f(&parts).await;
-                    parts.extensions.insert(val);
-                    let req = axum::extract::Request::from_parts(parts, body);
-                    next.run(req).await
-                }
-            }))
+            router.layer(axum::middleware::from_fn(
+                move |req: Request, next: Next| {
+                    let f = f.clone();
+                    async move {
+                        let (mut parts, body) = req.into_parts();
+                        let val = f(&parts).await;
+                        parts.extensions.insert(val);
+                        let req = axum::extract::Request::from_parts(parts, body);
+                        next.run(req).await
+                    }
+                },
+            ))
         }));
         self
     }
@@ -423,9 +425,8 @@ impl App {
             + 'static,
         <L::Service as tower::Service<Request>>::Future: Send + 'static,
     {
-        self.user_layers.push(Box::new(move |router: Router| {
-            router.layer(layer)
-        }));
+        self.user_layers
+            .push(Box::new(move |router: Router| router.layer(layer)));
         self
     }
 
@@ -606,9 +607,7 @@ async fn health_live() -> axum::response::Response {
     crate::ApiResponse::ok(serde_json::json!({ "status": "live" })).into_response()
 }
 
-async fn health_ready(
-    checks: Vec<Arc<dyn ReadinessCheck>>,
-) -> axum::response::Response {
+async fn health_ready(checks: Vec<Arc<dyn ReadinessCheck>>) -> axum::response::Response {
     let mut failures = Vec::new();
     for check in checks {
         if let Err(err) = check.check().await {
@@ -666,9 +665,8 @@ async fn shutdown_signal() {
 
     #[cfg(unix)]
     {
-        let mut sigterm =
-            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
-                .expect("failed to install SIGTERM handler");
+        let mut sigterm = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to install SIGTERM handler");
         tokio::select! {
             _ = ctrl_c => info!("received Ctrl+C, shutting down…"),
             _ = sigterm.recv() => info!("received SIGTERM, shutting down…"),
@@ -681,4 +679,3 @@ async fn shutdown_signal() {
         info!("received Ctrl+C, shutting down…");
     }
 }
-

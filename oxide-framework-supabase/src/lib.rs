@@ -92,7 +92,11 @@ impl SupabaseClient {
         }
     }
 
-    pub async fn select(&self, table: &str, query: &[(&str, &str)]) -> Result<Value, FrameworkError> {
+    pub async fn select(
+        &self,
+        table: &str,
+        query: &[(&str, &str)],
+    ) -> Result<Value, FrameworkError> {
         let url = format!("{}/rest/v1/{}", self.cfg.base_url, table);
         let res = self
             .http
@@ -108,7 +112,11 @@ impl SupabaseClient {
             .map_err(|e| FrameworkError::Internal(e.to_string()))
     }
 
-    pub async fn insert<T: Serialize>(&self, table: &str, payload: &T) -> Result<Value, FrameworkError> {
+    pub async fn insert<T: Serialize>(
+        &self,
+        table: &str,
+        payload: &T,
+    ) -> Result<Value, FrameworkError> {
         let url = format!("{}/rest/v1/{}", self.cfg.base_url, table);
         let res = self
             .http
@@ -125,7 +133,11 @@ impl SupabaseClient {
             .map_err(|e| FrameworkError::Internal(e.to_string()))
     }
 
-    pub async fn rpc<T: Serialize>(&self, function: &str, payload: &T) -> Result<Value, FrameworkError> {
+    pub async fn rpc<T: Serialize>(
+        &self,
+        function: &str,
+        payload: &T,
+    ) -> Result<Value, FrameworkError> {
         let url = format!("{}/rest/v1/rpc/{}", self.cfg.base_url, function);
         let res = self
             .http

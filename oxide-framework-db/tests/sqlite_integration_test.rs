@@ -1,4 +1,4 @@
-use oxide_framework_core::{App, ApiResponse, Data};
+use oxide_framework_core::{ApiResponse, App, Data};
 use oxide_framework_db::{AppDbExt, ConnectMode, Postgres, Sqlite};
 use reqwest::StatusCode;
 use std::sync::Arc;
@@ -42,7 +42,10 @@ async fn test_database_injection_and_query() {
     let server = App::new()
         // Here is the expected API design:
         // Automatically creates a pool and registers it in the DI container
-        .database::<Sqlite>("sqlite::memory:", |opts: sqlx::pool::PoolOptions<Sqlite>| opts.max_connections(5))
+        .database::<Sqlite>(
+            "sqlite::memory:",
+            |opts: sqlx::pool::PoolOptions<Sqlite>| opts.max_connections(5),
+        )
         .get("/db-test", get_user)
         .into_test_server()
         .await;
@@ -61,9 +64,12 @@ async fn test_database_injection_and_query() {
 async fn test_db_concurrency_and_pool_limits() {
     // Edge/Concurrency test: Fire 100 concurrent requests against a pool of size 2.
     // Proves deterministic behavior under load.
-    
+
     let server = App::new()
-        .database::<Sqlite>("sqlite::memory:", |opts: sqlx::pool::PoolOptions<Sqlite>| opts.max_connections(2))
+        .database::<Sqlite>(
+            "sqlite::memory:",
+            |opts: sqlx::pool::PoolOptions<Sqlite>| opts.max_connections(2),
+        )
         .get("/db-test", get_user)
         .into_test_server()
         .await;
@@ -76,7 +82,11 @@ async fn test_db_concurrency_and_pool_limits() {
         let server_clone = server.clone();
         let client_clone = client.clone();
         tasks.spawn(async move {
-            let res = client_clone.get(server_clone.url("/db-test")).send().await.unwrap();
+            let res = client_clone
+                .get(server_clone.url("/db-test"))
+                .send()
+                .await
+                .unwrap();
             assert_eq!(res.status(), StatusCode::OK);
         });
     }
@@ -126,4 +136,3 @@ async fn lazy_mode_does_not_fail_readiness_for_unreachable_postgres() {
     let res = reqwest::get(server.url("/health/ready")).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
 }
-

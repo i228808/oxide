@@ -6,14 +6,14 @@
 //! round-trip latency through reqwest.  This captures the true cost of
 //! the Oxide middleware stack vs bare Axum.
 
+use axum::Router;
 use axum::body::Body;
 use axum::extract::Path;
 use axum::http::Request;
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
-use axum::Router;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxide_framework_core::{controller, ApiResponse, App};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use oxide_framework_core::{ApiResponse, App, controller};
 use serde::Serialize;
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -58,11 +58,18 @@ async fn axum_post(axum::Json(body): axum::Json<serde_json::Value>) -> impl Into
 // ---------------------------------------------------------------------------
 
 async fn oxide_json() -> ApiResponse<Msg> {
-    ApiResponse::ok(Msg { text: "hello".into() })
+    ApiResponse::ok(Msg {
+        text: "hello".into(),
+    })
 }
 
-async fn oxide_path(oxide_framework_core::Path(id): oxide_framework_core::Path<u64>) -> ApiResponse<User> {
-    ApiResponse::ok(User { id, name: format!("user-{id}") })
+async fn oxide_path(
+    oxide_framework_core::Path(id): oxide_framework_core::Path<u64>,
+) -> ApiResponse<User> {
+    ApiResponse::ok(User {
+        id,
+        name: format!("user-{id}"),
+    })
 }
 
 async fn oxide_post(
@@ -82,12 +89,20 @@ struct BenchController;
 impl BenchController {
     #[get("/json")]
     async fn json_handler(&self) -> ApiResponse<Msg> {
-        ApiResponse::ok(Msg { text: "hello".into() })
+        ApiResponse::ok(Msg {
+            text: "hello".into(),
+        })
     }
 
     #[get("/users/{id}")]
-    async fn user_handler(&self, oxide_framework_core::Path(id): oxide_framework_core::Path<u64>) -> ApiResponse<User> {
-        ApiResponse::ok(User { id, name: format!("user-{id}") })
+    async fn user_handler(
+        &self,
+        oxide_framework_core::Path(id): oxide_framework_core::Path<u64>,
+    ) -> ApiResponse<User> {
+        ApiResponse::ok(User {
+            id,
+            name: format!("user-{id}"),
+        })
     }
 }
 
@@ -372,4 +387,3 @@ fn bench_concurrent(c: &mut Criterion) {
 
 criterion_group!(benches, bench_oneshot, bench_roundtrip, bench_concurrent);
 criterion_main!(benches);
-

@@ -46,4 +46,3 @@ impl AppState {
         self.extensions.get::<T>()
     }
 }
-

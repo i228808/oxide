@@ -1,4 +1,6 @@
-use oxide_framework_core::{controller, ApiResponse, App, AppState, Config, Data, Json, OxideRouter, Path};
+use oxide_framework_core::{
+    ApiResponse, App, AppState, Config, Data, Json, OxideRouter, Path, controller,
+};
 use serde::Serialize;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -72,8 +74,14 @@ async fn stats(Config(cfg): Config, Data(counter): Data<Counter>) -> ApiResponse
 
 async fn list_users() -> ApiResponse<Vec<User>> {
     ApiResponse::ok(vec![
-        User { id: 1, name: "Alice".into() },
-        User { id: 2, name: "Bob".into() },
+        User {
+            id: 1,
+            name: "Alice".into(),
+        },
+        User {
+            id: 2,
+            name: "Bob".into(),
+        },
     ])
 }
 
@@ -149,8 +157,12 @@ impl ProductController {
     #[get("/")]
     async fn list(&self) -> ApiResponse<Vec<Message>> {
         ApiResponse::ok(vec![
-            Message { text: "Widget".into() },
-            Message { text: "Gadget".into() },
+            Message {
+                text: "Widget".into(),
+            },
+            Message {
+                text: "Gadget".into(),
+            },
         ])
     }
 
@@ -196,4 +208,3 @@ fn main() {
         .controller::<ProductController>()
         .run();
 }
-

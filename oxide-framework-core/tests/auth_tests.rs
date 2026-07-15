@@ -1,8 +1,8 @@
 //! JWT auth, session cookie, and role guards.
 
 use oxide_framework_core::{
-    encode_token, ApiResponse, App, AuthClaims, AuthConfig, Authenticated, OptionalAuth, RequireRole,
-    RoleName,
+    ApiResponse, App, AuthClaims, AuthConfig, Authenticated, OptionalAuth, RequireRole, RoleName,
+    encode_token,
 };
 use serde::Serialize;
 
@@ -30,7 +30,9 @@ async fn bearer_token_sets_claims() {
     let server = app_with_auth()
         .get("/who", |OptionalAuth(opt): OptionalAuth| async move {
             let c = opt.expect("claims");
-            ApiResponse::ok(Msg { text: c.sub.clone() })
+            ApiResponse::ok(Msg {
+                text: c.sub.clone(),
+            })
         })
         .into_test_server()
         .await;
@@ -38,7 +40,10 @@ async fn bearer_token_sets_claims() {
     let client = reqwest::Client::new();
     let res = client
         .get(server.url("/who"))
-        .header("Authorization", format!("Bearer {}", token_for("alice", &["user"])))
+        .header(
+            "Authorization",
+            format!("Bearer {}", token_for("alice", &["user"])),
+        )
         .send()
         .await
         .unwrap();
@@ -86,9 +91,7 @@ async fn invalid_bearer_returns_401() {
 async fn session_cookie_auth() {
     let server = App::new()
         .disable_request_logging()
-        .auth(
-            AuthConfig::new(SECRET).with_session_cookie("oxide_session"),
-        )
+        .auth(AuthConfig::new(SECRET).with_session_cookie("oxide_session"))
         .get("/who", |OptionalAuth(opt): OptionalAuth| async move {
             ApiResponse::ok(Msg {
                 text: opt.map(|c| c.sub).unwrap_or_default(),
@@ -143,10 +146,9 @@ async fn require_role_allows() {
 #[tokio::test]
 async fn require_role_forbids() {
     let server = app_with_auth()
-        .get(
-            "/admin",
-            |_r: RequireRole<AdminRole>| async move { ApiResponse::ok(()) },
-        )
+        .get("/admin", |_r: RequireRole<AdminRole>| async move {
+            ApiResponse::ok(())
+        })
         .into_test_server()
         .await;
 
@@ -176,4 +178,3 @@ async fn authenticated_extractor_requires_login() {
     let res = client.get(server.url("/me")).send().await.unwrap();
     assert_eq!(res.status(), 401);
 }
-

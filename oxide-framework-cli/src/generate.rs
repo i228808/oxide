@@ -1,6 +1,6 @@
 //! `oxide generate` — controllers, routes, middleware stubs.
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use std::fs;
 use std::path::PathBuf;
 

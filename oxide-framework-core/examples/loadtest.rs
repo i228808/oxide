@@ -9,14 +9,14 @@
 //!   DURATION=10    — test duration in seconds (default 10)
 //!   CONCURRENCY=50 — concurrent tasks (default 50)
 
+use axum::Router;
 use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
-use axum::Router;
-use oxide_framework_core::{controller, ApiResponse, App};
+use oxide_framework_core::{ApiResponse, App, controller};
 use serde::Serialize;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 // ---------------------------------------------------------------------------
@@ -24,9 +24,14 @@ use std::time::{Duration, Instant};
 // ---------------------------------------------------------------------------
 
 #[derive(Serialize)]
-struct Msg { text: String }
+struct Msg {
+    text: String,
+}
 #[derive(Serialize)]
-struct User { id: u64, name: String }
+struct User {
+    id: u64,
+    name: String,
+}
 
 // ---------------------------------------------------------------------------
 // Raw Axum
@@ -41,7 +46,10 @@ async fn axum_path(Path(id): Path<u64>) -> impl IntoResponse {
 }
 
 async fn axum_post(axum::Json(b): axum::Json<serde_json::Value>) -> impl IntoResponse {
-    (axum::http::StatusCode::CREATED, axum::Json(serde_json::json!({"status":201,"data":b})))
+    (
+        axum::http::StatusCode::CREATED,
+        axum::Json(serde_json::json!({"status":201,"data":b})),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -49,12 +57,21 @@ async fn axum_post(axum::Json(b): axum::Json<serde_json::Value>) -> impl IntoRes
 // ---------------------------------------------------------------------------
 
 async fn oxide_json() -> ApiResponse<Msg> {
-    ApiResponse::ok(Msg { text: "hello".into() })
+    ApiResponse::ok(Msg {
+        text: "hello".into(),
+    })
 }
-async fn oxide_path(oxide_framework_core::Path(id): oxide_framework_core::Path<u64>) -> ApiResponse<User> {
-    ApiResponse::ok(User { id, name: format!("user-{id}") })
+async fn oxide_path(
+    oxide_framework_core::Path(id): oxide_framework_core::Path<u64>,
+) -> ApiResponse<User> {
+    ApiResponse::ok(User {
+        id,
+        name: format!("user-{id}"),
+    })
 }
-async fn oxide_post(oxide_framework_core::Json(b): oxide_framework_core::Json<serde_json::Value>) -> ApiResponse<serde_json::Value> {
+async fn oxide_post(
+    oxide_framework_core::Json(b): oxide_framework_core::Json<serde_json::Value>,
+) -> ApiResponse<serde_json::Value> {
     ApiResponse::created(b)
 }
 
@@ -65,7 +82,9 @@ struct BenchCtrl;
 impl BenchCtrl {
     #[get("/json")]
     async fn json_h(&self) -> ApiResponse<Msg> {
-        ApiResponse::ok(Msg { text: "hello".into() })
+        ApiResponse::ok(Msg {
+            text: "hello".into(),
+        })
     }
 }
 
@@ -201,7 +220,10 @@ async fn main() {
     let duration = Duration::from_secs(duration_secs);
 
     println!("=== Oxide Framework Load Test ===");
-    println!("Duration: {}s  |  Concurrency: {}", duration_secs, concurrency);
+    println!(
+        "Duration: {}s  |  Concurrency: {}",
+        duration_secs, concurrency
+    );
     println!();
 
     // -- Start servers ----------------------------------------------------
@@ -262,32 +284,38 @@ async fn main() {
     // -- Run tests --------------------------------------------------------
 
     println!("--- GET /json ---");
-    let raw  = run_load(&format!("http://{}/json", raw_addr), concurrency, duration).await;
+    let raw = run_load(&format!("http://{}/json", raw_addr), concurrency, duration).await;
     let omin = run_load(&oxide_min.url("/json"), concurrency, duration).await;
-    let ofull= run_load(&oxide_full.url("/json"), concurrency, duration).await;
-    let octrl= run_load(&oxide_ctrl.url("/api/json"), concurrency, duration).await;
+    let ofull = run_load(&oxide_full.url("/json"), concurrency, duration).await;
+    let octrl = run_load(&oxide_ctrl.url("/api/json"), concurrency, duration).await;
 
     print_stats("Raw Axum", &raw);
     print_stats("Oxide (minimal)", &omin);
     print_stats("Oxide (full middleware)", &ofull);
     print_stats("Oxide (controller + full)", &octrl);
 
-    let overhead_pct = ((ofull.avg().as_nanos() as f64 / raw.avg().as_nanos() as f64) - 1.0) * 100.0;
+    let overhead_pct =
+        ((ofull.avg().as_nanos() as f64 / raw.avg().as_nanos() as f64) - 1.0) * 100.0;
     println!();
     println!("  Framework overhead (full stack vs raw): {overhead_pct:+.1}% avg latency");
 
     println!();
     println!("--- GET /users/42 (path param) ---");
-    let raw_p  = run_load(&format!("http://{}/users/42", raw_addr), concurrency, duration).await;
+    let raw_p = run_load(
+        &format!("http://{}/users/42", raw_addr),
+        concurrency,
+        duration,
+    )
+    .await;
     let ofull_p = run_load(&oxide_full.url("/users/42"), concurrency, duration).await;
 
     print_stats("Raw Axum", &raw_p);
     print_stats("Oxide (full middleware)", &ofull_p);
 
-    let overhead_p = ((ofull_p.avg().as_nanos() as f64 / raw_p.avg().as_nanos() as f64) - 1.0) * 100.0;
+    let overhead_p =
+        ((ofull_p.avg().as_nanos() as f64 / raw_p.avg().as_nanos() as f64) - 1.0) * 100.0;
     println!("  Framework overhead: {overhead_p:+.1}% avg latency");
 
     println!();
     println!("=== Done ===");
 }
-

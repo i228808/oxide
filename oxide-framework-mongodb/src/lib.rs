@@ -74,13 +74,13 @@ impl AppMongoExt for App {
         let strict = config.strict;
         let cfg_for_init = config.clone();
         let handle = std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new()
-                .expect("failed to create runtime for mongodb init");
+            let rt =
+                tokio::runtime::Runtime::new().expect("failed to create runtime for mongodb init");
             rt.block_on(MongoHandle::connect(&cfg_for_init))
         })
-            .join()
-            .expect("failed to join mongodb init thread")
-            .expect("failed to initialize mongodb client");
+        .join()
+        .expect("failed to join mongodb init thread")
+        .expect("failed to initialize mongodb client");
 
         let app = self.state(handle.clone());
         if strict {
